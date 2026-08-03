@@ -41,6 +41,23 @@ The stories in this document intentionally focus on user outcomes before naming 
 
 ---
 
+# Agent Responsibilities
+
+Across all user stories, the agent is responsible for:
+
+- understanding the user's analytical intent
+- identifying relevant documents and structured data
+- selecting appropriate deterministic tools
+- planning multi-step analytical workflows
+- executing tools in the correct order
+- distinguishing evidence from inference
+- communicating uncertainty
+- producing grounded and explainable answers
+
+These responsibilities remain consistent regardless of the user's persona or workflow.
+
+---
+
 # Primary Personas
 
 The MVP focuses on five primary personas:
@@ -52,6 +69,25 @@ The MVP focuses on five primary personas:
 5. Consultant
 
 These personas represent recurring knowledge-work patterns across planning, analysis, technical reasoning, research synthesis, and advisory work.
+
+---
+
+# Core Product Workflow
+
+Every analytical workflow in OpenAgentLab follows the same high-level execution model:
+
+1. Upload one or more sources
+2. Inspect extracted content
+3. Ask an analytical question
+4. Agent understands the request
+5. Agent selects relevant tools
+6. Agent retrieves required evidence
+7. Deterministic tools execute the analysis
+8. Agent synthesizes the results
+9. User reviews evidence and execution trace
+10. User refines the analysis if needed
+
+All user stories in this document represent variations of this workflow.
 
 ---
 
@@ -505,14 +541,16 @@ Implied capabilities:
 
 The MVP should focus on a small set of stories that prove the core product loop:
 
-1. US-001: Upload Mixed Work Files
-2. US-003: Ask A Question Over Uploaded Materials
-3. US-004: Explain The Workflow Used
-4. US-005: Compare Budget Against Timeline
-5. US-008: Analyze KPI Data
-6. US-011: Check Technical Requirements Against A Standard
-7. US-014: Summarize Research Papers
-8. US-020: Review Source Evidence
+| Story | Why it belongs to the MVP |
+| --- | --- |
+| US-001 | Enables file ingestion |
+| US-003 | Defines the primary interaction |
+| US-004 | Introduces explainability |
+| US-005 | Demonstrates multi-tool orchestration |
+| US-008 | Validates structured data analysis |
+| US-011 | Shows engineering reasoning |
+| US-014 | Validates document understanding |
+| US-020 | Builds user trust through evidence |
 
 This set validates the essential workflow:
 
@@ -524,18 +562,18 @@ This set validates the essential workflow:
 
 The stories imply the following early capabilities:
 
-| Capability | Driven By Stories |
-| --- | --- |
-| File ingestion | US-001, US-002 |
-| Document reading | US-002, US-006, US-011, US-014 |
-| Spreadsheet analysis | US-005, US-008, US-009 |
-| Retrieval and source grounding | US-003, US-011, US-015, US-020 |
-| Deterministic calculations | US-005, US-008, US-012 |
-| Cross-source comparison | US-005, US-010, US-011, US-015, US-018 |
-| Report generation | US-007, US-019 |
-| Visualization | US-009 |
-| Agent planning and tool routing | US-003, US-004, US-021 |
-| Observability and traces | US-004, US-020, US-022 |
+| Capability | Stories | Future Module |
+| --- | --- | --- |
+| File ingestion | US-001, US-002 | ingestion |
+| Document reading | US-002, US-006, US-011, US-014 | document_tools |
+| Spreadsheet analysis | US-005, US-008, US-009 | spreadsheet_tools |
+| Retrieval & grounding | US-003, US-011, US-015, US-020 | rag |
+| Deterministic calculations | US-005, US-008, US-012 | python_executor |
+| Cross-document reasoning | US-005, US-010, US-011, US-015, US-018 | comparison |
+| Report generation | US-007, US-019 | reporting |
+| Visualization | US-009 | visualization |
+| Agent planning | US-003, US-004, US-021 | planner |
+| Observability | US-004, US-020, US-022 | observability |
 
 ---
 
@@ -555,6 +593,24 @@ The following stories or capabilities should be deferred unless needed for a foc
 
 ---
 
+# Story Traceability
+
+This document intentionally serves as the bridge between product design and software architecture.
+
+The traceability path throughout the project is:
+
+Project Vision
+-> Personas
+-> User Stories
+-> Functional Requirements
+-> Agent Architecture
+-> Tool Specifications
+-> API Design
+-> Implementation
+-> Evaluation
+
+---
+
 # Next Step
 
 This document should feed directly into functional requirements.
@@ -562,4 +618,3 @@ This document should feed directly into functional requirements.
 The next design question is:
 
 > What system capabilities are required to satisfy the MVP user stories reliably?
-
