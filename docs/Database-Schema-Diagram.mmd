@@ -1,0 +1,5 @@
+erDiagram
+    SESSION ||--o{ FILE : contains
+    SESSION ||--o{ WORKFLOW : owns
+    WORKFLOW ||--o{ TOOL_EXECUTION : executes
+    WORKFLOW ||--o{ REPORT : generates
