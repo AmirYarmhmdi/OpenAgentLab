@@ -190,87 +190,59 @@ Technology
 
 # High-Level Request Flow
 
-1.
-
-User uploads files
+1. User uploads files
 
 ↓
 
-2.
-
-FastAPI receives request
+2. FastAPI receives request
 
 ↓
 
-3.
-
-Metadata stored
+3. Metadata stored
 
 ↓
 
-4.
-
-Documents processed
+4. Documents processed
 
 ↓
 
-5.
-
-Embeddings generated
+5. Embeddings generated
 
 ↓
 
-6.
-
-Stored in Qdrant
+6. Stored in Qdrant
 
 ↓
 
-7.
-
-User asks question
+7. User asks question
 
 ↓
 
-8.
-
-Agent plans workflow
+8. Agent plans workflow
 
 ↓
 
-9.
-
-Retriever gathers evidence
+9. Retriever gathers evidence
 
 ↓
 
-10.
-
-Agent selects tools
+10. Agent selects tools
 
 ↓
 
-11.
-
-Tools execute
+11. Tools execute
 
 ↓
 
-12.
-
-Agent synthesizes response
+12. Agent synthesizes response
 
 ↓
 
-13.
-
-Execution stored
+13. Execution stored
 
 ↓
 
-14.
-
-Response returned
+14. Response returned
 
 ---
 
