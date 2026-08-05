@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/images/logo.png" alt="OpenAgentLab Logo" width="400">
+</div>
+
 # OpenAgentLab
 
 > A production-oriented AI platform for document understanding, retrieval, and intelligent workflow orchestration.
