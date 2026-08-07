@@ -67,3 +67,6 @@ ipython_config.py
 *.swp
 *.swo
 .DS_Store
+
+# Runtime uploads
+/storage/

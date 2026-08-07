@@ -40,3 +40,9 @@ def test_environment_variables_override_defaults(monkeypatch) -> None:
 
     assert settings.APP_NAME == "AuditName"
     assert settings.ENVIRONMENT == "audit"
+
+
+def test_local_storage_root_has_development_default(monkeypatch) -> None:
+    clear_settings_env(monkeypatch)
+
+    assert Settings().LOCAL_STORAGE_ROOT == "storage"

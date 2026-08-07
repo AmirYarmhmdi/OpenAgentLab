@@ -85,10 +85,13 @@ services:
       DATABASE_URL: ${OPENAGENTLAB_DATABASE_URL:-postgresql+asyncpg://openagentlab:openagentlab_dev_password@postgres:5432/openagentlab}
       QDRANT_URL: ${OPENAGENTLAB_QDRANT_URL:-http://qdrant:6333}
       LANGFUSE_HOST: ${OPENAGENTLAB_LANGFUSE_HOST:-http://langfuse-web:3000}
+      LOCAL_STORAGE_ROOT: ${OPENAGENTLAB_LOCAL_STORAGE_ROOT:-/app/storage}
     ports:
       - "${OPENAGENTLAB_HOST:-127.0.0.1}:${OPENAGENTLAB_PORT:-8000}:8000"
     networks:
       - openagentlab-network
+    volumes:
+      - openagentlab_storage:/app/storage
     healthcheck:
       test:
         [
@@ -284,6 +287,8 @@ volumes:
     name: openagentlab_postgres_data
   openagentlab_qdrant_data:
     name: openagentlab_qdrant_data
+  openagentlab_storage:
+    name: openagentlab_storage
   openagentlab_langfuse_postgres_data:
     name: openagentlab_langfuse_postgres_data
   openagentlab_langfuse_clickhouse_data:

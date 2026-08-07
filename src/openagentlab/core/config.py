@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str | None = None
     QDRANT_URL: str | None = None
     LANGFUSE_HOST: str | None = None
+    LOCAL_STORAGE_ROOT: str = "storage"
 
     # This tells pydantic-settings to also read values from a local .env file.
     model_config = SettingsConfigDict(

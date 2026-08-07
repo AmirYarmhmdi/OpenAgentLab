@@ -13,6 +13,11 @@ class DocumentStatus(StrEnum):
     FAILED = "failed"
 
 
+class FileStorageStatus(StrEnum):
+    STORED = "stored"
+    FAILED = "failed"
+
+
 class WorkflowExecutionStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"

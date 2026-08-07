@@ -46,8 +46,13 @@ def test_constraints_and_indexes_match_initial_schema() -> None:
         "ix_documents_session_id",
     }
     assert file_metadata.c.document_id.unique is True
+    assert file_metadata.c.document_id.nullable is True
+    assert file_metadata.c.normalized_extension.nullable is False
+    assert file_metadata.c.status.nullable is False
+    assert file_metadata.c.updated_at.nullable is False
     assert {constraint.name for constraint in file_metadata.constraints} >= {
         "ck_file_metadata_file_metadata_size_bytes_non_negative",
+        "ck_file_metadata_file_metadata_status",
         "uq_file_metadata_document_id",
     }
     assert {index.name for index in workflow_executions.indexes} == {
