@@ -170,6 +170,40 @@ Run tests:
 uv run pytest
 ```
 
+## Local Docker Infrastructure
+
+Create local configuration:
+
+```bash
+cp .env.example .env
+```
+
+Start the API, PostgreSQL, Qdrant, and Langfuse stack:
+
+```bash
+docker compose up -d --build
+```
+
+Useful local endpoints:
+
+- OpenAgentLab API: `http://localhost:8000`
+- OpenAgentLab health: `http://localhost:8000/api/v1/health`
+- Qdrant API and dashboard: `http://localhost:6333`
+- Qdrant gRPC: `localhost:6334`
+- Langfuse: `http://localhost:3000`
+- MinIO API for Langfuse blob storage: `http://localhost:9090`
+
+Inspect and stop the stack:
+
+```bash
+docker compose ps
+docker compose logs -f
+docker compose down
+```
+
+`docker compose down` keeps named volumes. `docker compose down -v` removes the
+local persistent data.
+
 ---
 
 # Documentation

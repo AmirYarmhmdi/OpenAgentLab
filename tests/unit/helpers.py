@@ -11,6 +11,9 @@ SETTINGS_ENV_VARS = (
     "LOG_LEVEL",
     "HOST",
     "PORT",
+    "DATABASE_URL",
+    "QDRANT_URL",
+    "LANGFUSE_HOST",
 )
 
 

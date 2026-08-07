@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     HOST: str = "0.0.0.0"
     PORT: int = 8000
+    DATABASE_URL: str | None = None
+    QDRANT_URL: str | None = None
+    LANGFUSE_HOST: str | None = None
 
     # This tells pydantic-settings to also read values from a local .env file.
     model_config = SettingsConfigDict(
