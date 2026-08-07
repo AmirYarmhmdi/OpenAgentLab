@@ -1,17 +1,28 @@
 [project]
 name = "OpenAgentLab"
 version = "0.1.0"
-description = "An AI engineering framework for building agentic applications and workflows."
+description = "An open-source AI orchestration framework for building agentic applications and workflows."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
 
-dependencies = []
+dependencies = [
+    "fastapi",
+    "pydantic",
+    "pydantic-settings",
+    "uvicorn",
+]
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 
 [dependency-groups]
 dev = [
     "black",
+    "httpx",
     "pre-commit",
     "pytest",
     "ruff",
@@ -38,8 +49,13 @@ select = [
 ]
 
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/openagentlab"]
+
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
+pythonpath = ["src"]
 addopts = "-ra"

@@ -6,7 +6,7 @@
 
 > A production-oriented AI platform for document understanding, retrieval, and intelligent workflow orchestration.
 
-OpenAgentLab is an open-source AI Engineering project that demonstrates how to design, build, evaluate, and deploy modern AI applications using production-grade software engineering practices.
+OpenAgentLab is an open-source AI orchestration platform that demonstrates how to design, build, evaluate, and deploy modern AI applications using production-grade software engineering practices.
 
 Rather than being a simple chatbot, OpenAgentLab is designed as an extensible platform where an AI Agent orchestrates deterministic tools to answer questions over structured and unstructured documents.
 
@@ -130,6 +130,44 @@ OpenAgentLab/
 ├── docker-compose.yml
 ├── pyproject.toml
 └── README.md
+```
+
+---
+
+# Backend Foundation
+
+The FastAPI backend lives under `src/openagentlab`.
+
+## Local setup
+
+Install dependencies:
+
+```bash
+uv sync
+```
+
+Create local environment configuration when needed:
+
+```bash
+cp .env.example .env
+```
+
+Start the backend from the repository root:
+
+```bash
+uv run uvicorn openagentlab.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Official health endpoint:
+
+```text
+GET http://localhost:8000/api/v1/health
+```
+
+Run tests:
+
+```bash
+uv run pytest
 ```
 
 ---
