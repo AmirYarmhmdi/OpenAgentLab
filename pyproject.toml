@@ -7,9 +7,12 @@ requires-python = ">=3.12"
 license = { file = "LICENSE" }
 
 dependencies = [
+    "alembic>=1.19.0",
+    "asyncpg>=0.31.0",
     "fastapi",
     "pydantic",
     "pydantic-settings",
+    "sqlalchemy[asyncio]>=2.0.51",
     "uvicorn",
 ]
 

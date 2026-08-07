@@ -82,7 +82,7 @@ services:
       LOG_LEVEL: ${OPENAGENTLAB_LOG_LEVEL:-INFO}
       HOST: 0.0.0.0
       PORT: 8000
-      DATABASE_URL: ${OPENAGENTLAB_DATABASE_URL:-postgresql://openagentlab:openagentlab_dev_password@postgres:5432/openagentlab}
+      DATABASE_URL: ${OPENAGENTLAB_DATABASE_URL:-postgresql+asyncpg://openagentlab:openagentlab_dev_password@postgres:5432/openagentlab}
       QDRANT_URL: ${OPENAGENTLAB_QDRANT_URL:-http://qdrant:6333}
       LANGFUSE_HOST: ${OPENAGENTLAB_LANGFUSE_HOST:-http://langfuse-web:3000}
     ports:

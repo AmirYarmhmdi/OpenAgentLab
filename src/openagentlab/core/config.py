@@ -3,7 +3,7 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# This class defines all settings the backend needs for Phase 3.
+# This class defines all settings the backend needs.
 class Settings(BaseSettings):
     """Application settings loaded from environment variables or .env."""
 
