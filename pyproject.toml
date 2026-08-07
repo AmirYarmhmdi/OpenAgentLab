@@ -1,7 +1,45 @@
 [project]
-name = "ai-engineering-assistant"
+name = "OpenAgentLab"
 version = "0.1.0"
-description = "Add your description here"
+description = "An AI engineering framework for building agentic applications and workflows."
 readme = "README.md"
 requires-python = ">=3.12"
+license = { file = "LICENSE" }
+
 dependencies = []
+
+
+[dependency-groups]
+dev = [
+    "black",
+    "pre-commit",
+    "pytest",
+    "ruff",
+]
+
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "UP",
+]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-ra"

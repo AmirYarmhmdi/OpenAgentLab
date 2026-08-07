@@ -1,5 +1,5 @@
 def main():
-    print("Hello from ai-engineering-assistant!")
+    print("Hello from OpenAgentLab!")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# Knowledge Worker Assistant – Project Framework
+# OpenAgentLab Project Framework
 
 ## Vision
 An open-source AI platform for knowledge workers (project managers, analysts, engineers, consultants, researchers) that can reason over documents and data, decide which tools to use, and produce reliable answers and reports.
