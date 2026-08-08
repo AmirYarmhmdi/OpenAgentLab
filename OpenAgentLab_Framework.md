@@ -147,3 +147,14 @@ Qdrant + pgvector(PostgreSQL)
 - MCP
 - Authentication
 - Multi-user
+
+----------
+Next high-value formats
+
+1. TXT
+2. Markdown
+3. JSON
+4. DOCX
+5. PPTX
+6. HTML
+7. XML
