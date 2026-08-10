@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Contains unit tests for csv reader behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.skills.document_processing, and
+  openagentlab.skills.document_processing.tools.csv_reader.
+"""
+
 from pathlib import Path
 
 import pytest

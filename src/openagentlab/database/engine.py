@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Builds async database engines from application settings.
+- Usage: Import create_database_engine, get_database_url, and get_engine from
+  openagentlab.database.engine.
+- Duties: Defines create_database_engine, get_database_url, and get_engine and
+  related helper logic.
+- Depends on: Project modules: openagentlab.core.config.
+"""
+
 from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine

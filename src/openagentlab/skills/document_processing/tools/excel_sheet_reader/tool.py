@@ -1,3 +1,15 @@
+"""File guide.
+
+- Use: Implements the deterministic tool that reads one worksheet from an Excel
+  workbook.
+- Usage: Import ExcelSheetReaderError, and ExcelSheetReaderTool from
+  openagentlab.skills.document_processing.tools.excel_sheet_reader.tool.
+- Duties: Defines ExcelSheetReaderError, and ExcelSheetReaderTool and related helper
+  logic.
+- Depends on: Project modules: openagentlab.skills.document_processing.tools.excel_s
+  heet_reader.schemas, and openagentlab.skills.tool.
+"""
+
 from datetime import date, datetime
 from pathlib import Path
 from zipfile import BadZipFile

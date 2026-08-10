@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Contains unit tests for upload persistence behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.database, openagentlab.database.engine,
+  openagentlab.database.session, openagentlab.repositories.file_metadata,
+  openagentlab.services.upload, and 1 more.
+"""
+
 import asyncio
 import os
 

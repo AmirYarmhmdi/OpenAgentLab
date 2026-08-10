@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Contains unit tests for json reader behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.skills.document_processing,
+  openagentlab.skills.document_processing.tools.json_reader, and
+  openagentlab.skills.tool.
+"""
+
 import json
 from pathlib import Path
 

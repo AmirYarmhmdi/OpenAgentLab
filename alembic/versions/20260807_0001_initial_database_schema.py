@@ -1,8 +1,10 @@
-"""initial database schema
+"""File guide.
 
-Revision ID: 20260807_0001
-Revises:
-Create Date: 2026-08-07 00:00:00.000000
+- Use: Creates the first database schema migration.
+- Usage: Run this through Alembic upgrade and downgrade commands.
+- Duties: Creates database changes in upgrade and reverses them in downgrade.
+- Depends on: External packages only: alembic, collections.abc, sqlalchemy, and
+  sqlalchemy.dialects.
 """
 
 from collections.abc import Sequence

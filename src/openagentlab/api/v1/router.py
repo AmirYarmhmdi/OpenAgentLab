@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Builds the version 1 API router and includes endpoint modules.
+- Usage: Import openagentlab.api.v1.router when this module is needed.
+- Duties: Keeps this small package area organized for imports.
+- Depends on: Project modules: openagentlab.api.v1.endpoints.
+"""
+
 from fastapi import APIRouter
 
 from openagentlab.api.v1.endpoints import health

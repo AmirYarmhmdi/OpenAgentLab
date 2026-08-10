@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Defines the SQLAlchemy table model for workflow executions.
+- Usage: Import WorkflowExecution from
+  openagentlab.database.models.workflow_execution.
+- Duties: Defines WorkflowExecution and related helper logic.
+- Depends on: Project modules: openagentlab.database.base, and
+  openagentlab.database.enums.
+"""
+
 from __future__ import annotations
 
 import uuid

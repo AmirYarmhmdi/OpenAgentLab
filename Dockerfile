@@ -1,3 +1,9 @@
+# File guide.
+# Use: Builds the production OpenAgentLab container image.
+# Usage: Docker Compose and Docker can build this file from the repo root.
+# Duties: Installs dependencies, copies source code, and starts Uvicorn.
+# Depends on: pyproject.toml, uv.lock, README.md, LICENSE, alembic, and src.
+
 FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.8.13 /uv /uvx /bin/

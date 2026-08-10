@@ -1,3 +1,9 @@
+# File guide.
+# Use: Runs the local OpenAgentLab development stack.
+# Usage: Start it with docker compose from the repo root.
+# Duties: Defines app, database, Qdrant, Langfuse, and support services.
+# Depends on: Dockerfile, .env.example values, and application settings.
+
 x-langfuse-depends-on: &langfuse-depends-on
   langfuse-postgres:
     condition: service_healthy

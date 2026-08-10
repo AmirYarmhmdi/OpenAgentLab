@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Contains unit tests for settings behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.core.config.
+"""
+
 import pytest
 from helpers import clear_settings_env
 from pydantic import ValidationError
@@ -46,3 +54,15 @@ def test_local_storage_root_has_development_default(monkeypatch) -> None:
     clear_settings_env(monkeypatch)
 
     assert Settings().LOCAL_STORAGE_ROOT == "storage"
+
+
+def test_rag_settings_have_development_defaults(monkeypatch) -> None:
+    clear_settings_env(monkeypatch)
+
+    settings = Settings()
+
+    assert settings.QDRANT_COLLECTION_NAME == "openagentlab_rag_chunks"
+    assert settings.RAG_EMBEDDING_MODEL == "text-embedding-3-small"
+    assert settings.RAG_EMBEDDING_DIMENSION == 1536
+    assert settings.RAG_CHUNK_SIZE == 800
+    assert settings.RAG_CHUNK_OVERLAP == 100

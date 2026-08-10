@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Defines Pydantic input and output schemas for reading DOCX files.
+- Usage: Import DOCXParagraph, DOCXReaderInput, DOCXReaderOutput, and 1 more from
+  openagentlab.skills.document_processing.tools.docx_reader.schemas.
+- Duties: Defines DOCXParagraph, DOCXReaderInput, DOCXReaderOutput, and DOCXTable
+  and related helper logic.
+- Depends on: External packages only: pathlib, and pydantic.
+"""
+
 from pathlib import Path
 
 from pydantic import BaseModel, Field

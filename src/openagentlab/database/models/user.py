@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Defines the SQLAlchemy table model for users.
+- Usage: Import User from openagentlab.database.models.user.
+- Duties: Defines User and related helper logic.
+- Depends on: Project modules: openagentlab.database.base.
+"""
+
 from __future__ import annotations
 
 import uuid

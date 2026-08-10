@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Stores and reads uploaded file metadata through a repository boundary.
+- Usage: Import FileMetadataCreate, FileMetadataRecord, FileMetadataRepository, and
+  1 more from openagentlab.repositories.file_metadata.
+- Duties: Defines FileMetadataCreate, FileMetadataRecord, FileMetadataRepository,
+  and SQLAlchemyFileMetadataRepository and related helper logic.
+- Depends on: Project modules: openagentlab.database.enums, and
+  openagentlab.database.models.file_metadata.
+"""
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol

@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Contains unit tests for local storage behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.storage.exceptions, and
+  openagentlab.storage.local.
+"""
+
 import pytest
 
 from openagentlab.storage.exceptions import (

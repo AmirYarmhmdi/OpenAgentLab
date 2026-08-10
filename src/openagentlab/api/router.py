@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Builds the top-level API router and includes versioned routers.
+- Usage: Import openagentlab.api.router when this module is needed.
+- Duties: Keeps this small package area organized for imports.
+- Depends on: Project modules: openagentlab.api.v1.router, and
+  openagentlab.core.config.
+"""
+
 from fastapi import APIRouter
 
 from openagentlab.api.v1.router import router as v1_router

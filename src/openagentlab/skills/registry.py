@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Registers Skills and prevents duplicate Skill names.
+- Usage: Import DuplicateSkillError, and SkillRegistry from
+  openagentlab.skills.registry.
+- Duties: Defines DuplicateSkillError, and SkillRegistry and related helper logic.
+- Depends on: Project modules: openagentlab.skills.base.
+"""
+
 from openagentlab.skills.base import BaseSkill
 
 

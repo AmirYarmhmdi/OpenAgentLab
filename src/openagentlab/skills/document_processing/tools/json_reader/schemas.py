@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Defines Pydantic input and output schemas for reading JSON files.
+- Usage: Import JSONReaderInput, and JSONReaderOutput from
+  openagentlab.skills.document_processing.tools.json_reader.schemas.
+- Duties: Defines JSONReaderInput, and JSONReaderOutput and related helper logic.
+- Depends on: External packages only: pathlib, and pydantic.
+"""
+
 from pathlib import Path
 
 from pydantic import BaseModel, Field

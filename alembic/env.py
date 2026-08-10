@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Configures Alembic so migrations can use the app database metadata.
+- Usage: Alembic imports this file when creating or running migrations.
+- Duties: Defines do_run_migrations, run_async_migrations, run_migrations_offline,
+  and run_migrations_online and related helper logic.
+- Depends on: Project modules: openagentlab.database, openagentlab.database.base,
+  and openagentlab.database.engine.
+"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Defines the shared SQLAlchemy base class and timestamp columns.
+- Usage: Import Base, and TimestampMixin from openagentlab.database.base.
+- Duties: Defines Base, and TimestampMixin and related helper logic.
+- Depends on: External packages only: datetime, sqlalchemy, and sqlalchemy.orm.
+"""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, MetaData, func

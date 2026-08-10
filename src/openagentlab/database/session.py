@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Creates async SQLAlchemy session factories and request sessions.
+- Usage: Import create_session_factory, get_async_session, and get_session_factory
+  from openagentlab.database.session.
+- Duties: Defines create_session_factory, get_async_session, and get_session_factory
+  and related helper logic.
+- Depends on: Project modules: openagentlab.database.engine.
+"""
+
 from collections.abc import AsyncIterator
 from functools import lru_cache
 

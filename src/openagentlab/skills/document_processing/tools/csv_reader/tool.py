@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Implements the deterministic tool that reads CSV files.
+- Usage: Import CSVReaderError, and CSVReaderTool from
+  openagentlab.skills.document_processing.tools.csv_reader.tool.
+- Duties: Defines CSVReaderError, and CSVReaderTool and related helper logic.
+- Depends on: Project modules:
+  openagentlab.skills.document_processing.tools.csv_reader.schemas, and
+  openagentlab.skills.tool.
+"""
+
 import csv
 from pathlib import Path
 

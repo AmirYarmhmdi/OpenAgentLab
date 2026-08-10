@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Contains unit tests for health behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: External packages only: fastapi.testclient, and helpers.
+"""
+
 from fastapi.testclient import TestClient
 from helpers import create_isolated_app
 

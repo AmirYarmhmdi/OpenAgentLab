@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Defines the shared Skill metadata and base Skill object.
+- Usage: Import BaseSkill, and SkillMetadata from openagentlab.skills.base.
+- Duties: Defines BaseSkill, and SkillMetadata and related helper logic.
+- Depends on: Project modules: openagentlab.skills.tool.
+"""
+
 from pydantic import BaseModel, Field
 
 from openagentlab.skills.tool import BaseTool

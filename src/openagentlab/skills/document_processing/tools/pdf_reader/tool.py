@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Implements the deterministic tool that reads PDF files.
+- Usage: Import PDFReaderError, and PDFReaderTool from
+  openagentlab.skills.document_processing.tools.pdf_reader.tool.
+- Duties: Defines PDFReaderError, and PDFReaderTool and related helper logic.
+- Depends on: Project modules:
+  openagentlab.skills.document_processing.tools.pdf_reader.schemas, and
+  openagentlab.skills.tool.
+"""
+
 from pathlib import Path
 
 from pypdf import PdfReader

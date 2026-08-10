@@ -1,3 +1,9 @@
+# File guide.
+# Use: Defines local pre-commit quality checks.
+# Usage: pre-commit runs these hooks before commits when installed.
+# Duties: Runs Ruff, Black, and pytest through uv.
+# Depends on: pyproject.toml and the project test suite.
+
 repos:
   - repo: local
     hooks:

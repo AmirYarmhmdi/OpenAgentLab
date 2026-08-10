@@ -1,3 +1,9 @@
+# File guide.
+# Use: Defines the Python package, dependencies, and tool settings.
+# Usage: uv, build tools, Ruff, Black, and pytest read this file.
+# Duties: Keeps project metadata, dependency groups, and test/lint config.
+# Depends on: README.md, LICENSE, src/openagentlab, and uv.lock.
+
 [project]
 name = "OpenAgentLab"
 version = "0.1.0"
@@ -15,6 +21,8 @@ dependencies = [
     "pydantic",
     "pydantic-settings",
     "python-docx",
+    "openai",
+    "qdrant-client",
     "sqlalchemy[asyncio]>=2.0.51",
     "uvicorn",
 ]

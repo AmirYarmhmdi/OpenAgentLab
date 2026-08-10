@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Defines the API response shape for health checks.
+- Usage: Import HealthResponse from openagentlab.schemas.health.
+- Duties: Defines HealthResponse and related helper logic.
+- Depends on: External packages only: pydantic.
+"""
+
 from pydantic import BaseModel
 
 

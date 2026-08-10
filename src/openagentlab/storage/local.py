@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Stores uploaded files on the local filesystem.
+- Usage: Import LocalStorageProvider from openagentlab.storage.local.
+- Duties: Defines LocalStorageProvider and related helper logic.
+- Depends on: Project modules: openagentlab.storage.base, and
+  openagentlab.storage.exceptions.
+"""
+
 from pathlib import Path, PurePosixPath
 
 from openagentlab.storage.base import StoredObject

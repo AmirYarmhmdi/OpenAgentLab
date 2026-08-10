@@ -1,12 +1,13 @@
-"""Skill-owned deterministic tool abstractions.
+"""File guide.
 
-`BaseTool` intentionally lives under `openagentlab.skills` because all current
-tools are owned by Skills. A separate `openagentlab.tools` package would add
-another abstraction layer without a current requirement.
+- Use: Defines the base class for deterministic tools owned by Skills.
+- Usage: Import BaseTool from openagentlab.skills.tool.
+- Duties: Defines BaseTool and related helper logic.
+- Depends on: External packages only: abc.
 
-If OpenAgentLab later introduces generic tools that do not naturally belong to
-a specific Skill, the shared tool infrastructure can be extracted into a
-top-level `openagentlab.tools` package at that time.
+Note: BaseTool lives under openagentlab.skills because current tools are owned
+by Skills. A future top-level tools package can be added when generic tools are
+needed.
 """
 
 from abc import ABC, abstractmethod

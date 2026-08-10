@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Implements the deterministic tool that reads JSON files.
+- Usage: Import JSONReaderError, and JSONReaderTool from
+  openagentlab.skills.document_processing.tools.json_reader.tool.
+- Duties: Defines JSONReaderError, and JSONReaderTool and related helper logic.
+- Depends on: Project modules:
+  openagentlab.skills.document_processing.tools.json_reader.schemas, and
+  openagentlab.skills.tool.
+"""
+
 import json
 from pathlib import Path
 

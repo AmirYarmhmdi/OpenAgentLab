@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Contains unit tests for exceptions behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.core.exceptions.
+"""
+
 from fastapi import status
 from fastapi.testclient import TestClient
 from helpers import create_isolated_app

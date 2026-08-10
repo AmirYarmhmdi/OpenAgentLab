@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Defines Pydantic input and output schemas for reading PDF files.
+- Usage: Import PDFPage, PDFReaderInput, and PDFReaderOutput from
+  openagentlab.skills.document_processing.tools.pdf_reader.schemas.
+- Duties: Defines PDFPage, PDFReaderInput, and PDFReaderOutput and related helper
+  logic.
+- Depends on: External packages only: pathlib, and pydantic.
+"""
+
 from pathlib import Path
 
 from pydantic import BaseModel, Field

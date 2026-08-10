@@ -1,3 +1,15 @@
+"""File guide.
+
+- Use: Coordinates file upload validation, storage, and metadata persistence.
+- Usage: Import UnsupportedUploadFileTypeError, UploadInput, and UploadService from
+  openagentlab.services.upload.
+- Duties: Defines UnsupportedUploadFileTypeError, UploadInput, and UploadService and
+  related helper logic.
+- Depends on: Project modules: openagentlab.core.exceptions,
+  openagentlab.database.enums, openagentlab.repositories.file_metadata, and
+  openagentlab.storage.base.
+"""
+
 import logging
 import uuid
 from collections.abc import Callable

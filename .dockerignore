@@ -1,3 +1,9 @@
+# File guide.
+# Use: Keeps local-only files out of Docker build contexts.
+# Usage: Docker reads this file automatically during image builds.
+# Duties: Excludes caches, virtualenvs, data folders, tests, and docs.
+# Depends on: Dockerfile build behavior.
+
 .git
 .github
 .venv

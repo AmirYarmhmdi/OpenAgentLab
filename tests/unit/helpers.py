@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Contains unit tests for helpers behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: External packages only: importlib, and sys.
+"""
+
 import importlib
 import sys
 
@@ -12,7 +20,14 @@ SETTINGS_ENV_VARS = (
     "HOST",
     "PORT",
     "DATABASE_URL",
+    "OPENAI_API_KEY",
     "QDRANT_URL",
+    "QDRANT_API_KEY",
+    "QDRANT_COLLECTION_NAME",
+    "RAG_EMBEDDING_MODEL",
+    "RAG_EMBEDDING_DIMENSION",
+    "RAG_CHUNK_SIZE",
+    "RAG_CHUNK_OVERLAP",
     "LANGFUSE_HOST",
     "LOCAL_STORAGE_ROOT",
 )

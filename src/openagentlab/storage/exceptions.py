@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Defines storage-layer errors for providers and services.
+- Usage: Import InvalidStorageKeyError, StorageError, and StorageObjectNotFoundError
+  from openagentlab.storage.exceptions.
+- Duties: Defines InvalidStorageKeyError, StorageError, and
+  StorageObjectNotFoundError and related helper logic.
+- Depends on: No direct project module dependencies.
+"""
+
+
 class StorageError(Exception):
     """Base error for storage provider failures."""
 

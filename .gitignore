@@ -1,3 +1,9 @@
+# File guide.
+# Use: Keeps local generated files out of git.
+# Usage: Git reads this file when showing status and staging changes.
+# Duties: Ignores caches, environments, build output, and local data.
+# Depends on: The project tools that create those local files.
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

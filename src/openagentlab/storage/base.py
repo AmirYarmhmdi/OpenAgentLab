@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Defines the storage provider contract used by upload services.
+- Usage: Import StorageProvider, and StoredObject from openagentlab.storage.base.
+- Duties: Defines StorageProvider, and StoredObject and related helper logic.
+- Depends on: External packages only: dataclasses, and typing.
+"""
+
 from dataclasses import dataclass
 from typing import Protocol
 

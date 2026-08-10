@@ -1,3 +1,15 @@
+"""File guide.
+
+- Use: Contains integration tests for document processing integration behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.skills,
+  openagentlab.skills.document_processing,
+  openagentlab.skills.document_processing.tools.csv_reader,
+  openagentlab.skills.document_processing.tools.docx_reader,
+  openagentlab.skills.document_processing.tools.excel_sheet_reader, and 6 more.
+"""
+
 import json
 from datetime import date, datetime
 from pathlib import Path

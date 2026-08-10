@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Creates the FastAPI application and wires startup, logging, routers, and
+  errors.
+- Usage: Import create_app, create_lifespan, and main from openagentlab.main.
+- Duties: Defines create_app, create_lifespan, and main and related helper logic.
+- Depends on: Project modules: openagentlab.api.router, openagentlab.core.config,
+  openagentlab.core.exceptions, and openagentlab.core.logging.
+"""
+
 import logging
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager

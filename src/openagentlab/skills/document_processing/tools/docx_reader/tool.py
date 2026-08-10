@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Implements the deterministic tool that reads DOCX files.
+- Usage: Import DOCXReaderError, and DOCXReaderTool from
+  openagentlab.skills.document_processing.tools.docx_reader.tool.
+- Duties: Defines DOCXReaderError, and DOCXReaderTool and related helper logic.
+- Depends on: Project modules:
+  openagentlab.skills.document_processing.tools.docx_reader.schemas, and
+  openagentlab.skills.tool.
+"""
+
 from datetime import date, datetime
 from pathlib import Path
 from zipfile import BadZipFile

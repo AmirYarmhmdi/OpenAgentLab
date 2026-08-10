@@ -1,3 +1,11 @@
+"""File guide.
+
+- Use: Configures application logging in one shared place.
+- Usage: Import configure_logging from openagentlab.core.logging.
+- Duties: Defines configure_logging and related helper logic.
+- Depends on: External packages only: logging.
+"""
+
 import logging
 
 # This is the shared log format used by the backend.

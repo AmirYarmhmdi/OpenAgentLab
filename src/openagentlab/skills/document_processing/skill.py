@@ -1,3 +1,16 @@
+"""File guide.
+
+- Use: Groups document reader tools into the Document Processing Skill.
+- Usage: Import DocumentProcessingSkill from
+  openagentlab.skills.document_processing.skill.
+- Duties: Defines DocumentProcessingSkill and related helper logic.
+- Depends on: Project modules: openagentlab.skills.base,
+  openagentlab.skills.document_processing.tools.csv_reader,
+  openagentlab.skills.document_processing.tools.docx_reader,
+  openagentlab.skills.document_processing.tools.excel_sheet_reader,
+  openagentlab.skills.document_processing.tools.excel_workbook_reader, and 3 more.
+"""
+
 from openagentlab.skills.base import BaseSkill, SkillMetadata
 from openagentlab.skills.document_processing.tools.csv_reader import CSVReaderTool
 from openagentlab.skills.document_processing.tools.docx_reader import DOCXReaderTool

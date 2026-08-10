@@ -1,5 +1,14 @@
+"""File guide.
+
+- Use: Loads application settings from environment variables and .env files.
+- Usage: Import Settings, and get_settings from openagentlab.core.config.
+- Duties: Defines Settings, and get_settings and related helper logic.
+- Depends on: External packages only: functools, pydantic, and pydantic_settings.
+"""
+
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +26,14 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     DATABASE_URL: str | None = None
+    OPENAI_API_KEY: str | None = None
     QDRANT_URL: str | None = None
+    QDRANT_API_KEY: str | None = None
+    QDRANT_COLLECTION_NAME: str = "openagentlab_rag_chunks"
+    RAG_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    RAG_EMBEDDING_DIMENSION: int = Field(default=1536, ge=1)
+    RAG_CHUNK_SIZE: int = Field(default=800, ge=1)
+    RAG_CHUNK_OVERLAP: int = Field(default=100, ge=0)
     LANGFUSE_HOST: str | None = None
     LOCAL_STORAGE_ROOT: str = "storage"
 

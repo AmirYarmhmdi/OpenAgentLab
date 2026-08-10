@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Contains unit tests for document processing skill behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.skills,
+  openagentlab.skills.document_processing, and openagentlab.skills.registry.
+"""
+
 import pytest
 
 from openagentlab.skills import SkillMetadata, SkillRegistry

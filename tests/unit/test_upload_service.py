@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Contains unit tests for upload service behavior.
+- Usage: Run this file with pytest when checking related behavior.
+- Duties: Builds test data, calls the public API, and checks expected results.
+- Depends on: Project modules: openagentlab.database.enums,
+  openagentlab.repositories.file_metadata, openagentlab.services.upload,
+  openagentlab.storage.base, and openagentlab.storage.exceptions.
+"""
+
 import asyncio
 from dataclasses import replace
 from datetime import UTC, datetime

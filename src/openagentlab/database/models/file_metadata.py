@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Defines the SQLAlchemy table model for uploaded file metadata.
+- Usage: Import FileMetadata from openagentlab.database.models.file_metadata.
+- Duties: Defines FileMetadata and related helper logic.
+- Depends on: Project modules: openagentlab.database.base, and
+  openagentlab.database.enums.
+"""
+
 from __future__ import annotations
 
 import uuid

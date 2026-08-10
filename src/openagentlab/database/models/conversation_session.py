@@ -1,3 +1,13 @@
+"""File guide.
+
+- Use: Defines the SQLAlchemy table model for conversation sessions.
+- Usage: Import ConversationSession from
+  openagentlab.database.models.conversation_session.
+- Duties: Defines ConversationSession and related helper logic.
+- Depends on: Project modules: openagentlab.database.base, and
+  openagentlab.database.enums.
+"""
+
 from __future__ import annotations
 
 import uuid

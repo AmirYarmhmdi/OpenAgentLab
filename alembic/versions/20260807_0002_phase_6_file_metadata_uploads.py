@@ -1,8 +1,9 @@
-"""phase 6 file metadata uploads
+"""File guide.
 
-Revision ID: 20260807_0002
-Revises: 20260807_0001
-Create Date: 2026-08-07 00:00:00.000000
+- Use: Adds database support for persisted uploaded file metadata.
+- Usage: Run this through Alembic upgrade and downgrade commands.
+- Duties: Creates database changes in upgrade and reverses them in downgrade.
+- Depends on: External packages only: alembic, collections.abc, and sqlalchemy.
 """
 
 from collections.abc import Sequence

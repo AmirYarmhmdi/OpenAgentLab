@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Defines application exceptions and FastAPI error handlers.
+- Usage: Import AppException, app_exception_handler, register_exception_handlers,
+  and 1 more from openagentlab.core.exceptions.
+- Duties: Defines AppException, app_exception_handler, register_exception_handlers,
+  and unexpected_exception_handler and related helper logic.
+- Depends on: External packages only: fastapi, fastapi.responses, logging, and
+  typing.
+"""
+
 import logging
 from typing import Any
 

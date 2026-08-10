@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Implements the deterministic tool that reads plain text files.
+- Usage: Import TextReaderError, and TextReaderTool from
+  openagentlab.skills.document_processing.tools.text_reader.tool.
+- Duties: Defines TextReaderError, and TextReaderTool and related helper logic.
+- Depends on: Project modules:
+  openagentlab.skills.document_processing.tools.text_reader.schemas, and
+  openagentlab.skills.tool.
+"""
+
 from pathlib import Path
 
 from openagentlab.skills.tool import BaseTool

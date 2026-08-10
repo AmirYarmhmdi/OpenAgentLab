@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Defines the SQLAlchemy table model for documents.
+- Usage: Import Document from openagentlab.database.models.document.
+- Duties: Defines Document and related helper logic.
+- Depends on: Project modules: openagentlab.database.base, and
+  openagentlab.database.enums.
+"""
+
 from __future__ import annotations
 
 import uuid

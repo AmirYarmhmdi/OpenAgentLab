@@ -1,3 +1,14 @@
+"""File guide.
+
+- Use: Defines Pydantic input and output schemas for reading whole Excel workbooks.
+- Usage: Import ExcelSheetInfo, ExcelWorkbookReaderInput, and
+  ExcelWorkbookReaderOutput from
+  openagentlab.skills.document_processing.tools.excel_workbook_reader.schemas.
+- Duties: Defines ExcelSheetInfo, ExcelWorkbookReaderInput, and
+  ExcelWorkbookReaderOutput and related helper logic.
+- Depends on: External packages only: pathlib, and pydantic.
+"""
+
 from pathlib import Path
 
 from pydantic import BaseModel, Field

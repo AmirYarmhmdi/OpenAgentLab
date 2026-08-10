@@ -1,3 +1,12 @@
+"""File guide.
+
+- Use: Defines Pydantic input and output schemas for reading plain text files.
+- Usage: Import TextReaderInput, and TextReaderOutput from
+  openagentlab.skills.document_processing.tools.text_reader.schemas.
+- Duties: Defines TextReaderInput, and TextReaderOutput and related helper logic.
+- Depends on: External packages only: pathlib, and pydantic.
+"""
+
 from pathlib import Path
 
 from pydantic import BaseModel, Field
