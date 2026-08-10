@@ -14,6 +14,11 @@ current and planned initial tools are:
 - Excel Sheet Reader: implemented for deterministic `.xlsx` worksheet row
   extraction.
 - CSV Reader: implemented for deterministic delimited text row extraction.
+- Text Reader: implemented for deterministic `.txt` raw text extraction.
+- JSON Reader: implemented for deterministic `.json` parsing with native JSON
+  value preservation.
+- DOCX Reader: implemented for deterministic `.docx` paragraph, table, and
+  metadata extraction.
 
 Reader tools should parse files and return structured results. The LLM or
 orchestrator should select and coordinate these tools instead of performing file

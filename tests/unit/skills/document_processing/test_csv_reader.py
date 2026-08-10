@@ -251,4 +251,7 @@ def test_document_processing_skill_exposes_csv_reader_tool() -> None:
     assert "document.read.excel.workbook" in skill.executable_capabilities
     assert "document.read.excel.sheet" in skill.executable_capabilities
     assert "document.read.csv" in skill.executable_capabilities
+    assert "document.read.text" in skill.executable_capabilities
+    assert "document.read.json" in skill.executable_capabilities
+    assert "document.read.docx" in skill.executable_capabilities
     assert skill.get_tool("csv_reader") is not None

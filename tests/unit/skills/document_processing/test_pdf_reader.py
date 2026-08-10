@@ -168,3 +168,6 @@ def test_document_processing_skill_exposes_pdf_reader_tool() -> None:
     assert skill.get_tool("pdf_reader") is not None
     assert "document.read.excel" not in skill.executable_capabilities
     assert "document.read.csv" in skill.executable_capabilities
+    assert "document.read.text" in skill.executable_capabilities
+    assert "document.read.json" in skill.executable_capabilities
+    assert "document.read.docx" in skill.executable_capabilities

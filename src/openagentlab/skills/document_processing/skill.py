@@ -1,12 +1,15 @@
 from openagentlab.skills.base import BaseSkill, SkillMetadata
 from openagentlab.skills.document_processing.tools.csv_reader import CSVReaderTool
+from openagentlab.skills.document_processing.tools.docx_reader import DOCXReaderTool
 from openagentlab.skills.document_processing.tools.excel_sheet_reader import (
     ExcelSheetReaderTool,
 )
 from openagentlab.skills.document_processing.tools.excel_workbook_reader import (
     ExcelWorkbookReaderTool,
 )
+from openagentlab.skills.document_processing.tools.json_reader import JSONReaderTool
 from openagentlab.skills.document_processing.tools.pdf_reader import PDFReaderTool
+from openagentlab.skills.document_processing.tools.text_reader import TextReaderTool
 
 
 class DocumentProcessingSkill(BaseSkill):
@@ -28,12 +31,18 @@ class DocumentProcessingSkill(BaseSkill):
                 "document.read.excel.workbook",
                 "document.read.excel.sheet",
                 "document.read.csv",
+                "document.read.text",
+                "document.read.json",
+                "document.read.docx",
             ),
             tools=(
                 PDFReaderTool(),
                 ExcelWorkbookReaderTool(),
                 ExcelSheetReaderTool(),
                 CSVReaderTool(),
+                TextReaderTool(),
+                JSONReaderTool(),
+                DOCXReaderTool(),
             ),
             dependencies=(),
         )

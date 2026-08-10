@@ -37,6 +37,9 @@ def test_document_processing_skill_declares_planned_capabilities() -> None:
         "document.read.excel.workbook",
         "document.read.excel.sheet",
         "document.read.csv",
+        "document.read.text",
+        "document.read.json",
+        "document.read.docx",
     )
 
 
@@ -48,6 +51,9 @@ def test_document_processing_skill_exposes_pdf_as_executable_capability() -> Non
         "document.read.excel.workbook",
         "document.read.excel.sheet",
         "document.read.csv",
+        "document.read.text",
+        "document.read.json",
+        "document.read.docx",
     )
     assert skill.get_tool("pdf_reader") is not None
 
@@ -59,8 +65,14 @@ def test_document_processing_skill_keeps_high_level_excel_non_executable() -> No
     assert "document.read.excel.workbook" in skill.executable_capabilities
     assert "document.read.excel.sheet" in skill.executable_capabilities
     assert "document.read.csv" in skill.capabilities
+    assert "document.read.text" in skill.capabilities
+    assert "document.read.json" in skill.capabilities
+    assert "document.read.docx" in skill.capabilities
     assert "document.read.excel" not in skill.executable_capabilities
     assert "document.read.csv" in skill.executable_capabilities
+    assert "document.read.text" in skill.executable_capabilities
+    assert "document.read.json" in skill.executable_capabilities
+    assert "document.read.docx" in skill.executable_capabilities
 
 
 def test_skill_registry_registers_and_retrieves_skill() -> None:

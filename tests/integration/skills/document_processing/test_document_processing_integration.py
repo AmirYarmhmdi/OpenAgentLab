@@ -3,6 +3,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 import pytest
+from docx import Document
 from openpyxl import Workbook, load_workbook
 from pydantic import BaseModel, ValidationError
 
@@ -12,6 +13,11 @@ from openagentlab.skills.document_processing.tools.csv_reader import (
     CSVReaderError,
     CSVReaderInput,
     CSVReaderOutput,
+)
+from openagentlab.skills.document_processing.tools.docx_reader import (
+    DOCXReaderError,
+    DOCXReaderInput,
+    DOCXReaderOutput,
 )
 from openagentlab.skills.document_processing.tools.excel_sheet_reader import (
     ExcelSheetReaderError,
@@ -23,10 +29,20 @@ from openagentlab.skills.document_processing.tools.excel_workbook_reader import 
     ExcelWorkbookReaderInput,
     ExcelWorkbookReaderOutput,
 )
+from openagentlab.skills.document_processing.tools.json_reader import (
+    JSONReaderError,
+    JSONReaderInput,
+    JSONReaderOutput,
+)
 from openagentlab.skills.document_processing.tools.pdf_reader import (
     PDFReaderError,
     PDFReaderInput,
     PDFReaderOutput,
+)
+from openagentlab.skills.document_processing.tools.text_reader import (
+    TextReaderError,
+    TextReaderInput,
+    TextReaderOutput,
 )
 from openagentlab.skills.registry import DuplicateSkillError
 from openagentlab.skills.tool import BaseTool
@@ -37,18 +53,27 @@ EXPECTED_DECLARED_CAPABILITIES = (
     "document.read.excel.workbook",
     "document.read.excel.sheet",
     "document.read.csv",
+    "document.read.text",
+    "document.read.json",
+    "document.read.docx",
 )
 EXPECTED_EXECUTABLE_CAPABILITIES = (
     "document.read.pdf",
     "document.read.excel.workbook",
     "document.read.excel.sheet",
     "document.read.csv",
+    "document.read.text",
+    "document.read.json",
+    "document.read.docx",
 )
 EXPECTED_TOOL_NAMES = (
     "pdf_reader",
     "excel_workbook_reader",
     "excel_sheet_reader",
     "csv_reader",
+    "text_reader",
+    "json_reader",
+    "docx_reader",
 )
 
 
@@ -176,6 +201,32 @@ def write_workbook(path: Path) -> None:
 
 def write_csv(path: Path, content: str, encoding: str = "utf-8") -> None:
     path.write_text(content, encoding=encoding, newline="")
+
+
+def write_plain_text(path: Path, content: str, encoding: str = "utf-8") -> None:
+    path.write_text(content, encoding=encoding)
+
+
+def write_json_value(path: Path, value: object, encoding: str = "utf-8") -> None:
+    path.write_text(json.dumps(value, ensure_ascii=False), encoding=encoding)
+
+
+def write_docx(path: Path) -> None:
+    document = Document()
+    document.add_paragraph("Integration paragraph")
+    document.add_paragraph("  Second paragraph  ")
+
+    table = document.add_table(rows=2, cols=2)
+    table.cell(0, 0).text = "name"
+    table.cell(0, 1).text = "value"
+    table.cell(1, 0).text = "alpha"
+    table.cell(1, 1).text = "42"
+
+    document.core_properties.title = "Integration DOCX"
+    document.core_properties.author = "OpenAgentLab"
+    document.core_properties.created = datetime(2026, 8, 8, 9, 30, 0)
+
+    document.save(path)
 
 
 def test_document_processing_skill_contract() -> None:
@@ -530,15 +581,157 @@ def test_csv_reader_failures_propagate_through_skill(tmp_path: Path) -> None:
         tool.execute(CSVReaderInput(path=malformed, delimiter=","))
 
 
+def test_text_reader_executes_through_skill(tmp_path: Path) -> None:
+    path = tmp_path / "notes.txt"
+    content = "  hello\n\nworld café\ntrailing   "
+    write_plain_text(path, content)
+    tool = get_required_tool(DocumentProcessingSkill(), "text_reader")
+
+    result = tool.execute(TextReaderInput(path=path, max_chars=10))
+
+    assert isinstance(result, TextReaderOutput)
+    assert result.path == path
+    assert result.text == content[:10]
+    assert result.encoding == "utf-8"
+    assert result.char_count == len(content)
+    assert result.line_count == 4
+    assert result.truncated is True
+
+
+def test_text_reader_failures_propagate_through_skill(tmp_path: Path) -> None:
+    tool = get_required_tool(DocumentProcessingSkill(), "text_reader")
+    unsupported = tmp_path / "notes.md"
+    bad_encoding = tmp_path / "bad-encoding.txt"
+    unsupported.write_text("# markdown", encoding="utf-8")
+    bad_encoding.write_bytes("André".encode("latin-1"))
+
+    with pytest.raises(FileNotFoundError):
+        tool.execute(TextReaderInput(path=tmp_path / "missing.txt"))
+
+    with pytest.raises(IsADirectoryError):
+        tool.execute(TextReaderInput(path=tmp_path))
+
+    with pytest.raises(ValueError, match=".txt extension"):
+        tool.execute(TextReaderInput(path=unsupported))
+
+    with pytest.raises(TextReaderError, match="Unknown text encoding"):
+        tool.execute(TextReaderInput(path=bad_encoding, encoding="not-a-codec"))
+
+    with pytest.raises(TextReaderError, match="could not be decoded"):
+        tool.execute(TextReaderInput(path=bad_encoding))
+
+    with pytest.raises(ValidationError):
+        TextReaderInput(path=bad_encoding, max_chars=0)
+
+
+def test_json_reader_executes_through_skill(tmp_path: Path) -> None:
+    path = tmp_path / "document.json"
+    value = {
+        "name": "OpenAgentLab",
+        "count": 42,
+        "active": True,
+        "date": "2026-08-10",
+        "items": [1, "2", False, None, {"nested": "yes"}],
+    }
+    write_json_value(path, value)
+    tool = get_required_tool(DocumentProcessingSkill(), "json_reader")
+
+    result = tool.execute(JSONReaderInput(path=path))
+
+    assert isinstance(result, JSONReaderOutput)
+    assert result.path == path
+    assert result.data == value
+    assert result.root_type == "object"
+    assert result.item_count == 5
+    assert result.encoding == "utf-8"
+    assert isinstance(result.data["count"], int)
+    assert isinstance(result.data["date"], str)
+
+
+def test_json_reader_failures_propagate_through_skill(tmp_path: Path) -> None:
+    tool = get_required_tool(DocumentProcessingSkill(), "json_reader")
+    malformed = tmp_path / "malformed.json"
+    unsupported = tmp_path / "document.jsonl"
+    bad_encoding = tmp_path / "bad-encoding.json"
+    malformed.write_text('{"missing": ', encoding="utf-8")
+    unsupported.write_text('{"ok": true}\n', encoding="utf-8")
+    bad_encoding.write_bytes('{"name": "André"}'.encode("latin-1"))
+
+    with pytest.raises(FileNotFoundError):
+        tool.execute(JSONReaderInput(path=tmp_path / "missing.json"))
+
+    with pytest.raises(IsADirectoryError):
+        tool.execute(JSONReaderInput(path=tmp_path))
+
+    with pytest.raises(ValueError, match=".json extension"):
+        tool.execute(JSONReaderInput(path=unsupported))
+
+    with pytest.raises(JSONReaderError, match="Malformed JSON file"):
+        tool.execute(JSONReaderInput(path=malformed))
+
+    with pytest.raises(JSONReaderError, match="Unknown JSON encoding"):
+        tool.execute(JSONReaderInput(path=malformed, encoding="not-a-codec"))
+
+    with pytest.raises(JSONReaderError, match="could not be decoded"):
+        tool.execute(JSONReaderInput(path=bad_encoding))
+
+
+def test_docx_reader_executes_through_skill(tmp_path: Path) -> None:
+    path = tmp_path / "document.docx"
+    write_docx(path)
+    tool = get_required_tool(DocumentProcessingSkill(), "docx_reader")
+
+    result = tool.execute(DOCXReaderInput(path=path))
+
+    assert isinstance(result, DOCXReaderOutput)
+    assert result.path == path
+    assert result.paragraph_count == 2
+    assert result.table_count == 1
+    assert [paragraph.index for paragraph in result.paragraphs] == [1, 2]
+    assert result.paragraphs[0].text == "Integration paragraph"
+    assert result.paragraphs[1].text == "  Second paragraph  "
+    assert result.tables[0].index == 1
+    assert result.tables[0].rows == (("name", "value"), ("alpha", "42"))
+    assert isinstance(result.tables[0].rows[1][1], str)
+    assert result.metadata["title"] == "Integration DOCX"
+    assert result.metadata["author"] == "OpenAgentLab"
+
+
+def test_docx_reader_failures_propagate_through_skill(tmp_path: Path) -> None:
+    tool = get_required_tool(DocumentProcessingSkill(), "docx_reader")
+    unsupported = tmp_path / "document.doc"
+    broken = tmp_path / "broken.docx"
+    unsupported.write_bytes(b"not supported")
+    broken.write_bytes(b"not a real docx")
+
+    with pytest.raises(FileNotFoundError):
+        tool.execute(DOCXReaderInput(path=tmp_path / "missing.docx"))
+
+    with pytest.raises(IsADirectoryError):
+        tool.execute(DOCXReaderInput(path=tmp_path))
+
+    with pytest.raises(ValueError, match=".docx extension"):
+        tool.execute(DOCXReaderInput(path=unsupported))
+
+    with pytest.raises(DOCXReaderError, match="Could not read DOCX file"):
+        tool.execute(DOCXReaderInput(path=broken))
+
+
 def test_representative_outputs_serialize_without_library_objects(
     tmp_path: Path,
 ) -> None:
     pdf_path = tmp_path / "document.pdf"
     workbook_path = tmp_path / "workbook.xlsx"
     csv_path = tmp_path / "data.csv"
+    text_path = tmp_path / "notes.txt"
+    json_path = tmp_path / "document.json"
+    docx_path = tmp_path / "document.docx"
     write_text_pdf(pdf_path, ("Serializable PDF",), {"Title": "Serializable"})
     write_workbook(workbook_path)
     write_csv(csv_path, "a,b\n1,2\n")
+    write_plain_text(text_path, "serializable text")
+    write_json_value(json_path, {"serializable": [1, True, None]})
+    write_docx(docx_path)
     skill = DocumentProcessingSkill()
 
     outputs = (
@@ -552,6 +745,15 @@ def test_representative_outputs_serialize_without_library_objects(
         get_required_tool(skill, "csv_reader").execute(
             CSVReaderInput(path=csv_path, delimiter=",")
         ),
+        get_required_tool(skill, "text_reader").execute(
+            TextReaderInput(path=text_path)
+        ),
+        get_required_tool(skill, "json_reader").execute(
+            JSONReaderInput(path=json_path)
+        ),
+        get_required_tool(skill, "docx_reader").execute(
+            DOCXReaderInput(path=docx_path)
+        ),
     )
 
     for output in outputs:
@@ -562,15 +764,22 @@ def test_representative_outputs_serialize_without_library_objects(
         assert isinstance(encoded["path"], str)
         assert "openpyxl" not in str(encoded)
         assert "pypdf" not in str(encoded)
+        assert "docx." not in str(encoded)
 
 
 def test_repeated_execution_is_deterministic_through_skill(tmp_path: Path) -> None:
     pdf_path = tmp_path / "document.pdf"
     workbook_path = tmp_path / "workbook.xlsx"
     csv_path = tmp_path / "data.csv"
+    text_path = tmp_path / "notes.txt"
+    json_path = tmp_path / "document.json"
+    docx_path = tmp_path / "document.docx"
     write_text_pdf(pdf_path, ("Repeatable PDF",), {"Title": "Repeatable"})
     write_workbook(workbook_path)
     write_csv(csv_path, "a,b\n1,2\n")
+    write_plain_text(text_path, "repeatable text")
+    write_json_value(json_path, {"items": [1, 2, 3]})
+    write_docx(docx_path)
     skill = DocumentProcessingSkill()
 
     executions = (
@@ -581,6 +790,9 @@ def test_repeated_execution_is_deterministic_through_skill(tmp_path: Path) -> No
             ExcelSheetReaderInput(path=workbook_path, sheet_name="Summary"),
         ),
         ("csv_reader", CSVReaderInput(path=csv_path, delimiter=",")),
+        ("text_reader", TextReaderInput(path=text_path)),
+        ("json_reader", JSONReaderInput(path=json_path)),
+        ("docx_reader", DOCXReaderInput(path=docx_path)),
     )
 
     for tool_name, tool_input in executions:
@@ -594,9 +806,15 @@ def test_files_remain_readable_after_tool_execution(tmp_path: Path) -> None:
     pdf_path = tmp_path / "document.pdf"
     workbook_path = tmp_path / "workbook.xlsx"
     csv_path = tmp_path / "data.csv"
+    text_path = tmp_path / "notes.txt"
+    json_path = tmp_path / "document.json"
+    docx_path = tmp_path / "document.docx"
     write_text_pdf(pdf_path, ("Resource PDF",))
     write_workbook(workbook_path)
     write_csv(csv_path, "a,b\n1,2\n")
+    write_plain_text(text_path, "plain text")
+    write_json_value(json_path, {"ok": True})
+    write_docx(docx_path)
     skill = DocumentProcessingSkill()
 
     get_required_tool(skill, "pdf_reader").execute(PDFReaderInput(path=pdf_path))
@@ -609,6 +827,9 @@ def test_files_remain_readable_after_tool_execution(tmp_path: Path) -> None:
     get_required_tool(skill, "csv_reader").execute(
         CSVReaderInput(path=csv_path, delimiter=",")
     )
+    get_required_tool(skill, "text_reader").execute(TextReaderInput(path=text_path))
+    get_required_tool(skill, "json_reader").execute(JSONReaderInput(path=json_path))
+    get_required_tool(skill, "docx_reader").execute(DOCXReaderInput(path=docx_path))
 
     assert pdf_path.read_bytes().startswith(b"%PDF")
     workbook = load_workbook(workbook_path, read_only=True)
@@ -617,3 +838,6 @@ def test_files_remain_readable_after_tool_execution(tmp_path: Path) -> None:
     finally:
         workbook.close()
     assert csv_path.read_text(encoding="utf-8") == "a,b\n1,2\n"
+    assert text_path.read_text(encoding="utf-8") == "plain text"
+    assert json.loads(json_path.read_text(encoding="utf-8")) == {"ok": True}
+    assert Document(docx_path).paragraphs[0].text == "Integration paragraph"
