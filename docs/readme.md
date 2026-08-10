@@ -47,6 +47,7 @@ Explains **why** architectural decisions were made.
 Each ADR documents:
 
 - Context
+
 - Decision
 - Alternatives
 - Consequences
