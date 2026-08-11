@@ -29,6 +29,7 @@ class CSVReaderTool(BaseTool):
             name="csv_reader",
             description="Read rows and string cells from a local .csv file.",
             capability="document.read.csv",
+            args_schema=CSVReaderInput,
         )
 
     def execute(self, tool_input: CSVReaderInput) -> CSVReaderOutput:

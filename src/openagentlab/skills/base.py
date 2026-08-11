@@ -3,11 +3,13 @@
 - Use: Defines the shared Skill metadata and base Skill object.
 - Usage: Import BaseSkill, and SkillMetadata from openagentlab.skills.base.
 - Duties: Defines BaseSkill, and SkillMetadata and related helper logic.
-- Depends on: Project modules: openagentlab.skills.tool.
+- Depends on: Project modules: openagentlab.skills.capabilities and
+  openagentlab.skills.tool.
 """
 
 from pydantic import BaseModel, Field
 
+from openagentlab.skills.capabilities import CapabilityDefinition
 from openagentlab.skills.tool import BaseTool
 
 
@@ -46,6 +48,10 @@ class BaseSkill:
     @property
     def executable_capabilities(self) -> tuple[str, ...]:
         return tuple(tool.capability for tool in self.tools)
+
+    @property
+    def capability_definitions(self) -> tuple[CapabilityDefinition, ...]:
+        return tuple(tool.capability_definition for tool in self.tools)
 
     def get_tool(self, name: str) -> BaseTool | None:
         for tool in self.tools:

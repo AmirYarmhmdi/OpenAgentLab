@@ -31,6 +31,7 @@ class DOCXReaderTool(BaseTool):
             name="docx_reader",
             description="Extract paragraphs, tables, and metadata from a local .docx.",
             capability="document.read.docx",
+            args_schema=DOCXReaderInput,
         )
 
     def execute(self, tool_input: DOCXReaderInput) -> DOCXReaderOutput:

@@ -27,6 +27,7 @@ class JSONReaderTool(BaseTool):
             name="json_reader",
             description="Read and parse native JSON values from a local .json file.",
             capability="document.read.json",
+            args_schema=JSONReaderInput,
         )
 
     def execute(self, tool_input: JSONReaderInput) -> JSONReaderOutput:

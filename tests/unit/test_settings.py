@@ -62,6 +62,9 @@ def test_rag_settings_have_development_defaults(monkeypatch) -> None:
     settings = Settings()
 
     assert settings.QDRANT_COLLECTION_NAME == "openagentlab_rag_chunks"
+    assert settings.OPENAGENTLAB_PLANNER_MODEL == "gpt-4.1-mini"
+    assert settings.OPENAGENTLAB_TOOL_SELECTOR_MODEL == "gpt-4.1-mini"
+    assert settings.OPENAGENTLAB_RESPONSE_MODEL == "gpt-4.1-mini"
     assert settings.RAG_EMBEDDING_MODEL == "text-embedding-3-small"
     assert settings.RAG_EMBEDDING_DIMENSION == 1536
     assert settings.RAG_CHUNK_SIZE == 800

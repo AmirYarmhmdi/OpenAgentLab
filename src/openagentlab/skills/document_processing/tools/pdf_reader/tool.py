@@ -32,6 +32,7 @@ class PDFReaderTool(BaseTool):
             name="pdf_reader",
             description="Extract text and basic metadata from a local text-based PDF.",
             capability="document.read.pdf",
+            args_schema=PDFReaderInput,
         )
 
     def execute(self, tool_input: PDFReaderInput) -> PDFReaderOutput:

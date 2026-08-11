@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     QDRANT_URL: str | None = None
     QDRANT_API_KEY: str | None = None
     QDRANT_COLLECTION_NAME: str = "openagentlab_rag_chunks"
+    OPENAGENTLAB_PLANNER_MODEL: str = "gpt-4.1-mini"
+    OPENAGENTLAB_TOOL_SELECTOR_MODEL: str = "gpt-4.1-mini"
+    OPENAGENTLAB_RESPONSE_MODEL: str = "gpt-4.1-mini"
     RAG_EMBEDDING_MODEL: str = "text-embedding-3-small"
     RAG_EMBEDDING_DIMENSION: int = Field(default=1536, ge=1)
     RAG_CHUNK_SIZE: int = Field(default=800, ge=1)

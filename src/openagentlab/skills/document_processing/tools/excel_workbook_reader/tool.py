@@ -35,6 +35,7 @@ class ExcelWorkbookReaderTool(BaseTool):
             name="excel_workbook_reader",
             description="Inspect local .xlsx workbook sheets and basic metadata.",
             capability="document.read.excel.workbook",
+            args_schema=ExcelWorkbookReaderInput,
         )
 
     def execute(

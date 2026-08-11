@@ -26,6 +26,7 @@ class TextReaderTool(BaseTool):
             name="text_reader",
             description="Read raw text from a local .txt file.",
             capability="document.read.text",
+            args_schema=TextReaderInput,
         )
 
     def execute(self, tool_input: TextReaderInput) -> TextReaderOutput:

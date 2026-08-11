@@ -34,6 +34,7 @@ class ExcelSheetReaderTool(BaseTool):
                 "Extract worksheet rows from a named sheet in a local .xlsx file."
             ),
             capability="document.read.excel.sheet",
+            args_schema=ExcelSheetReaderInput,
         )
 
     def execute(self, tool_input: ExcelSheetReaderInput) -> ExcelSheetReaderOutput:
