@@ -6,7 +6,8 @@
 - Duties: Tracks runtime task state separately from immutable plans, resolves
   task-output references, validates resolved arguments, and runs executors.
 - Depends on: Standard library concurrency. Project modules:
-  openagentlab.agent.schemas and openagentlab.tools.registry.
+  openagentlab.agent.schemas, openagentlab.observability, and
+  openagentlab.tools.registry.
 """
 
 from collections.abc import Callable, Mapping, Sequence
@@ -23,6 +24,7 @@ from openagentlab.agent.schemas import (
     LiteralArgument,
     TaskOutputReference,
 )
+from openagentlab.observability import observed_tool, sanitize_for_observability
 from openagentlab.tools.registry import (
     ToolArgumentValidationError,
     UnknownToolError,
@@ -232,7 +234,14 @@ def _execute_task(
     resolved_arguments = resolve_task_arguments(task, task_states)
     validated_arguments = validate_tool_arguments(task.capability, resolved_arguments)
     executor = get_tool(task.capability)
-    return executor.execute(**validated_arguments)
+    with observed_tool(
+        name=task.capability,
+        input=validated_arguments,
+        metadata={"task_id": task.id},
+    ) as observation:
+        result = executor.execute(**validated_arguments)
+        observation.update(output=sanitize_for_observability(result))
+        return result
 
 
 def _resolve_argument_value(

@@ -69,3 +69,14 @@ def test_rag_settings_have_development_defaults(monkeypatch) -> None:
     assert settings.RAG_EMBEDDING_DIMENSION == 1536
     assert settings.RAG_CHUNK_SIZE == 800
     assert settings.RAG_CHUNK_OVERLAP == 100
+
+
+def test_langfuse_observability_is_disabled_by_default(monkeypatch) -> None:
+    clear_settings_env(monkeypatch)
+
+    settings = Settings()
+
+    assert settings.LANGFUSE_ENABLED is False
+    assert settings.LANGFUSE_PUBLIC_KEY is None
+    assert settings.LANGFUSE_SECRET_KEY is None
+    assert settings.LANGFUSE_BASE_URL is None

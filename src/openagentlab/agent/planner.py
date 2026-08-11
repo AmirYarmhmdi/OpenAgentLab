@@ -5,7 +5,8 @@
 - Duties: Converts user requests into validated structured execution plans.
 - Depends on: External packages: pydantic. Project modules:
   openagentlab.agent.exceptions, openagentlab.agent.schemas,
-  openagentlab.core.config, and openagentlab.skills.capabilities.
+  openagentlab.core.config, openagentlab.observability, and
+  openagentlab.skills.capabilities.
 """
 
 from typing import Any, Protocol
@@ -15,6 +16,11 @@ from pydantic import BaseModel, Field
 from openagentlab.agent.exceptions import PlannerError
 from openagentlab.agent.schemas import ExecutionPlan
 from openagentlab.core.config import Settings, get_settings
+from openagentlab.observability import (
+    observed_generation,
+    sanitize_for_observability,
+    usage_details_from_response,
+)
 from openagentlab.skills.capabilities import CapabilityPromptView
 
 DEFAULT_OPENAI_PLANNER_MODEL = "gpt-4.1-mini"
@@ -87,6 +93,7 @@ class OpenAIPlanner:
             ),
         )
         self._client = client
+        self._settings = resolved_settings
 
     def create_plan(
         self,
@@ -98,16 +105,35 @@ class OpenAIPlanner:
             msg = "Planner user query must not be empty."
             raise PlannerError(msg)
 
+        planner_input = _build_planner_input(
+            user_query=user_query,
+            available_capabilities=available_capabilities,
+        )
+
         try:
-            response = self._get_client().responses.parse(
+            with observed_generation(
+                name="agent.planner",
                 model=self._config.model,
-                instructions=PLANNER_INSTRUCTIONS,
-                input=_build_planner_input(
-                    user_query=user_query,
-                    available_capabilities=available_capabilities,
-                ),
-                text_format=ExecutionPlan,
-            )
+                input={
+                    "instructions": PLANNER_INSTRUCTIONS,
+                    "input": planner_input,
+                    "text_format": "ExecutionPlan",
+                },
+                metadata={"component": "planner"},
+                settings=self._settings,
+            ) as observation:
+                response = self._get_client().responses.parse(
+                    model=self._config.model,
+                    instructions=PLANNER_INSTRUCTIONS,
+                    input=planner_input,
+                    text_format=ExecutionPlan,
+                )
+                observation.update(
+                    output=sanitize_for_observability(
+                        getattr(response, "output_parsed", None)
+                    ),
+                    usage_details=usage_details_from_response(response),
+                )
         except PlannerError:
             raise
         except Exception as exc:

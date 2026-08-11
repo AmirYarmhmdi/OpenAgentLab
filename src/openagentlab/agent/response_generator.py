@@ -6,7 +6,8 @@
 - Duties: Presents validated workflow outcomes without executing work.
 - Depends on: External packages: pydantic. Project modules:
   openagentlab.agent.exceptions, openagentlab.agent.execution,
-  openagentlab.agent.schemas, and openagentlab.core.config.
+  openagentlab.agent.schemas, openagentlab.core.config, and
+  openagentlab.observability.
 """
 
 import json
@@ -18,6 +19,11 @@ from openagentlab.agent.exceptions import ResponseGenerationError
 from openagentlab.agent.execution import ExecutionResult
 from openagentlab.agent.schemas import ExecutionPlan
 from openagentlab.core.config import Settings, get_settings
+from openagentlab.observability import (
+    observed_generation,
+    sanitize_for_observability,
+    usage_details_from_response,
+)
 
 DEFAULT_OPENAI_RESPONSE_MODEL = "gpt-4.1-mini"
 
@@ -94,6 +100,7 @@ class OpenAIResponseGenerator:
             ),
         )
         self._client = client
+        self._settings = resolved_settings
 
     def generate_response(
         self,
@@ -110,20 +117,38 @@ class OpenAIResponseGenerator:
             msg = "Response generator user query must not be empty."
             raise ResponseGenerationError(msg)
 
+        response_input = _build_response_input(
+            user_query=user_query,
+            plan=plan,
+            execution_plan=execution_plan,
+            execution_result=execution_result,
+            tool_name=tool_name,
+            tool_result=tool_result,
+            error=error,
+        )
+
         try:
-            response = self._get_client().responses.create(
+            with observed_generation(
+                name="agent.response_generator",
                 model=self._config.model,
-                instructions=RESPONSE_GENERATOR_INSTRUCTIONS,
-                input=_build_response_input(
-                    user_query=user_query,
-                    plan=plan,
-                    execution_plan=execution_plan,
-                    execution_result=execution_result,
-                    tool_name=tool_name,
-                    tool_result=tool_result,
-                    error=error,
-                ),
-            )
+                input={
+                    "instructions": RESPONSE_GENERATOR_INSTRUCTIONS,
+                    "input": response_input,
+                },
+                metadata={"component": "response_generator"},
+                settings=self._settings,
+            ) as observation:
+                response = self._get_client().responses.create(
+                    model=self._config.model,
+                    instructions=RESPONSE_GENERATOR_INSTRUCTIONS,
+                    input=response_input,
+                )
+                observation.update(
+                    output=sanitize_for_observability(
+                        getattr(response, "output_text", None)
+                    ),
+                    usage_details=usage_details_from_response(response),
+                )
         except ResponseGenerationError:
             raise
         except Exception as exc:

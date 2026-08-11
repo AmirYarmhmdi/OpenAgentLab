@@ -18,6 +18,7 @@ from openagentlab.api.router import router as api_router
 from openagentlab.core.config import Settings, get_settings
 from openagentlab.core.exceptions import register_exception_handlers
 from openagentlab.core.logging import configure_logging
+from openagentlab.observability import shutdown_observability, startup_observability
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,9 @@ def create_lifespan(
             settings.APP_VERSION,
             settings.ENVIRONMENT,
         )
+        startup_observability(settings)
         yield
+        shutdown_observability(settings)
         logger.info("Stopping %s", settings.APP_NAME)
 
     return lifespan

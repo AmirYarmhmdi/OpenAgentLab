@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     RAG_CHUNK_SIZE: int = Field(default=800, ge=1)
     RAG_CHUNK_OVERLAP: int = Field(default=100, ge=0)
     LANGFUSE_HOST: str | None = None
+    LANGFUSE_ENABLED: bool = False
+    LANGFUSE_PUBLIC_KEY: str | None = None
+    LANGFUSE_SECRET_KEY: str | None = None
+    LANGFUSE_BASE_URL: str | None = None
     LOCAL_STORAGE_ROOT: str = "storage"
 
     # This tells pydantic-settings to also read values from a local .env file.

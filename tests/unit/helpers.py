@@ -32,6 +32,10 @@ SETTINGS_ENV_VARS = (
     "RAG_CHUNK_SIZE",
     "RAG_CHUNK_OVERLAP",
     "LANGFUSE_HOST",
+    "LANGFUSE_ENABLED",
+    "LANGFUSE_PUBLIC_KEY",
+    "LANGFUSE_SECRET_KEY",
+    "LANGFUSE_BASE_URL",
     "LOCAL_STORAGE_ROOT",
 )
 
@@ -55,7 +59,11 @@ def create_isolated_app(monkeypatch):
         "openagentlab.main",
         "openagentlab.api.router",
         "openagentlab.api.v1.router",
+        "openagentlab.api.v1.endpoints.documents",
         "openagentlab.api.v1.endpoints.health",
+        "openagentlab.api.v1.endpoints.questions",
+        "openagentlab.api.v1.endpoints.workflows",
+        "openagentlab.api.dependencies",
     ):
         sys.modules.pop(module_name, None)
 

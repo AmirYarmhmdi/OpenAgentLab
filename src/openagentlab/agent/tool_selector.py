@@ -6,7 +6,8 @@
 - Duties: Proposes zero or one registered tool invocation without execution.
 - Depends on: External packages: pydantic. Project modules:
   openagentlab.agent.exceptions, openagentlab.agent.schemas,
-  openagentlab.core.config, and openagentlab.skills.capabilities.
+  openagentlab.core.config, openagentlab.observability, and
+  openagentlab.skills.capabilities.
 """
 
 from typing import Any, Protocol
@@ -16,6 +17,11 @@ from pydantic import BaseModel, Field
 from openagentlab.agent.exceptions import ToolSelectorError
 from openagentlab.agent.schemas import ToolSelection
 from openagentlab.core.config import Settings, get_settings
+from openagentlab.observability import (
+    observed_generation,
+    sanitize_for_observability,
+    usage_details_from_response,
+)
 from openagentlab.skills.capabilities import CapabilityPromptView
 
 DEFAULT_OPENAI_TOOL_SELECTOR_MODEL = "gpt-4.1-mini"
@@ -88,6 +94,7 @@ class OpenAIToolSelector:
             ),
         )
         self._client = client
+        self._settings = resolved_settings
 
     def select_tool(
         self,
@@ -100,17 +107,36 @@ class OpenAIToolSelector:
             msg = "Tool selector user query must not be empty."
             raise ToolSelectorError(msg)
 
+        selector_input = _build_selector_input(
+            user_query=user_query,
+            plan=plan,
+            available_tools=available_tools,
+        )
+
         try:
-            response = self._get_client().responses.parse(
+            with observed_generation(
+                name="agent.tool_selector",
                 model=self._config.model,
-                instructions=TOOL_SELECTOR_INSTRUCTIONS,
-                input=_build_selector_input(
-                    user_query=user_query,
-                    plan=plan,
-                    available_tools=available_tools,
-                ),
-                text_format=ToolSelection,
-            )
+                input={
+                    "instructions": TOOL_SELECTOR_INSTRUCTIONS,
+                    "input": selector_input,
+                    "text_format": "ToolSelection",
+                },
+                metadata={"component": "tool_selector"},
+                settings=self._settings,
+            ) as observation:
+                response = self._get_client().responses.parse(
+                    model=self._config.model,
+                    instructions=TOOL_SELECTOR_INSTRUCTIONS,
+                    input=selector_input,
+                    text_format=ToolSelection,
+                )
+                observation.update(
+                    output=sanitize_for_observability(
+                        getattr(response, "output_parsed", None)
+                    ),
+                    usage_details=usage_details_from_response(response),
+                )
         except ToolSelectorError:
             raise
         except Exception as exc:

@@ -8,10 +8,13 @@
 
 from fastapi import APIRouter
 
-from openagentlab.api.v1.endpoints import health
+from openagentlab.api.v1.endpoints import documents, health, questions, workflows
 
 # This router collects every v1 endpoint module.
 router = APIRouter()
 
 # Health is the only v1 endpoint implemented in Phase 3.
 router.include_router(health.router, tags=["health"])
+router.include_router(documents.router, tags=["documents"])
+router.include_router(questions.router, tags=["questions"])
+router.include_router(workflows.router, tags=["workflows"])

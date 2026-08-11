@@ -58,6 +58,9 @@ class FileMetadataRepository(Protocol):
     async def get_by_id(self, file_id: UUID) -> FileMetadataRecord | None:
         """Return a file metadata record by ID."""
 
+    async def list(self) -> list[FileMetadataRecord]:
+        """Return uploaded file metadata records known to the application."""
+
 
 class SQLAlchemyFileMetadataRepository:
     """SQLAlchemy-backed repository for file metadata."""
@@ -100,6 +103,12 @@ class SQLAlchemyFileMetadataRepository:
             return None
 
         return _to_record(record)
+
+    async def list(self) -> list[FileMetadataRecord]:
+        result = await self._session.execute(
+            select(FileMetadata).order_by(FileMetadata.created_at.desc()),
+        )
+        return [_to_record(record) for record in result.scalars().all()]
 
 
 def _to_record(metadata: FileMetadata) -> FileMetadataRecord:
