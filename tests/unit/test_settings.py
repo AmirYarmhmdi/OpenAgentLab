@@ -71,6 +71,20 @@ def test_rag_settings_have_development_defaults(monkeypatch) -> None:
     assert settings.RAG_CHUNK_OVERLAP == 100
 
 
+def test_evaluation_settings_have_baseline_defaults(monkeypatch) -> None:
+    clear_settings_env(monkeypatch)
+
+    settings = Settings()
+
+    assert settings.EVALUATION_MODEL == "gpt-4.1-mini"
+    assert settings.EVALUATION_EMBEDDING_MODEL == "text-embedding-3-small"
+    assert settings.EVALUATION_ANSWER_RELEVANCY_THRESHOLD == 0.70
+    assert settings.EVALUATION_FAITHFULNESS_THRESHOLD == 0.70
+    assert settings.EVALUATION_CONTEXT_PRECISION_THRESHOLD == 0.70
+    assert settings.EVALUATION_CONTEXT_RECALL_THRESHOLD == 0.70
+    assert settings.EVALUATION_HALLUCINATION_THRESHOLD == 0.30
+
+
 def test_langfuse_observability_is_disabled_by_default(monkeypatch) -> None:
     clear_settings_env(monkeypatch)
 

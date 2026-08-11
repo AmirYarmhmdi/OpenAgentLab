@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     RAG_EMBEDDING_DIMENSION: int = Field(default=1536, ge=1)
     RAG_CHUNK_SIZE: int = Field(default=800, ge=1)
     RAG_CHUNK_OVERLAP: int = Field(default=100, ge=0)
+    EVALUATION_MODEL: str = "gpt-4.1-mini"
+    EVALUATION_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EVALUATION_ANSWER_RELEVANCY_THRESHOLD: float = Field(default=0.70, ge=0.0, le=1.0)
+    EVALUATION_FAITHFULNESS_THRESHOLD: float = Field(default=0.70, ge=0.0, le=1.0)
+    EVALUATION_CONTEXT_PRECISION_THRESHOLD: float = Field(default=0.70, ge=0.0, le=1.0)
+    EVALUATION_CONTEXT_RECALL_THRESHOLD: float = Field(default=0.70, ge=0.0, le=1.0)
+    EVALUATION_HALLUCINATION_THRESHOLD: float = Field(default=0.30, ge=0.0, le=1.0)
     LANGFUSE_HOST: str | None = None
     LANGFUSE_ENABLED: bool = False
     LANGFUSE_PUBLIC_KEY: str | None = None

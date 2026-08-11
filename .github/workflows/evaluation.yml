@@ -1,0 +1,47 @@
+name: Evaluation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deterministic:
+    name: Deterministic checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+      - run: uv run ruff check .
+      - run: uv run black --check .
+      - run: uv run pytest tests/unit
+      - run: uv run python -m openagentlab.evaluation validate --dataset evaluation/datasets/smoke.jsonl
+
+  llm-evaluation:
+    name: LLM evaluation smoke
+    runs-on: ubuntu-latest
+    needs: deterministic
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev --group evaluation
+      - name: Skip when credentials are unavailable
+        if: ${{ env.OPENAI_API_KEY == '' }}
+        run: echo "OPENAI_API_KEY is not configured; skipping LLM evaluation."
+      - name: Run DeepEval regression tests
+        if: ${{ env.OPENAI_API_KEY != '' }}
+        run: uv run pytest -m evaluation tests/evaluation
+      - name: Run Ragas smoke evaluation
+        if: ${{ env.OPENAI_API_KEY != '' }}
+        run: uv run python -m openagentlab.evaluation ragas --dataset evaluation/datasets/smoke.jsonl --tags smoke
