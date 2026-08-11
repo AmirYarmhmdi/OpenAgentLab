@@ -63,7 +63,15 @@ against real production goldens:
 
 ## CI
 
-The evaluation workflow runs deterministic lint, formatting, unit tests, and
-evaluation infrastructure tests for normal pull requests. LLM-backed Ragas and
-DeepEval smoke checks run only when `OPENAI_API_KEY` is available and the pull
-request is not from an untrusted fork.
+The main CI workflow owns linting, formatting, unit tests, integration tests,
+and Docker builds. The separate evaluation workflow owns evaluation-specific
+checks.
+
+For pull requests and pushes to `main`, the evaluation workflow runs only when
+evaluation-relevant files change. The automatic job validates the smoke dataset
+without external API calls and uploads `dataset-validation.json`.
+
+LLM-backed DeepEval and Ragas smoke checks run only from `workflow_dispatch`.
+They use the existing `OPENAI_API_KEY` secret when available. If the secret is
+not configured, the workflow records a JSON skip report instead of failing
+before any evaluator runs.

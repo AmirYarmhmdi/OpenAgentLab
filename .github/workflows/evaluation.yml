@@ -2,13 +2,42 @@ name: Evaluation
 
 on:
   pull_request:
+    paths:
+      - "src/openagentlab/agent/**"
+      - "src/openagentlab/evaluation/**"
+      - "src/openagentlab/rag/**"
+      - "src/openagentlab/tools/**"
+      - "tests/evaluation/**"
+      - "tests/unit/evaluation/**"
+      - "evaluation/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/evaluation.yml"
   push:
     branches: [main]
+    paths:
+      - "src/openagentlab/agent/**"
+      - "src/openagentlab/evaluation/**"
+      - "src/openagentlab/rag/**"
+      - "src/openagentlab/tools/**"
+      - "tests/evaluation/**"
+      - "tests/unit/evaluation/**"
+      - "evaluation/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/evaluation.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deterministic:
-    name: Deterministic checks
+  dataset-validation:
+    name: Dataset validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,17 +45,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: uv sync --group dev
-      - run: uv run ruff check .
-      - run: uv run black --check .
-      - run: uv run pytest tests/unit
-      - run: uv run python -m openagentlab.evaluation validate --dataset evaluation/datasets/smoke.jsonl
+      - run: uv sync --locked --group dev
+      - run: mkdir -p evaluation-results
+      - name: Validate smoke dataset
+        run: uv run python -m openagentlab.evaluation validate --dataset evaluation/datasets/smoke.jsonl --tags smoke | tee evaluation-results/dataset-validation.json
+      - name: Upload dataset validation result
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evaluation-dataset-validation
+          path: evaluation-results/
 
   llm-evaluation:
     name: LLM evaluation smoke
     runs-on: ubuntu-latest
-    needs: deterministic
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: dataset-validation
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
@@ -35,13 +69,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: uv sync --group dev --group evaluation
+      - run: uv sync --locked --group dev --group evaluation
+      - run: mkdir -p evaluation-results
       - name: Skip when credentials are unavailable
         if: ${{ env.OPENAI_API_KEY == '' }}
-        run: echo "OPENAI_API_KEY is not configured; skipping LLM evaluation."
+        run: |
+          printf '%s\n' '{"status":"skipped","reason":"OPENAI_API_KEY is not configured."}' > evaluation-results/llm-evaluation-skipped.json
       - name: Run DeepEval regression tests
         if: ${{ env.OPENAI_API_KEY != '' }}
-        run: uv run pytest -m evaluation tests/evaluation
+        run: uv run pytest -m evaluation tests/evaluation -v --junitxml=evaluation-results/deepeval-junit.xml
       - name: Run Ragas smoke evaluation
         if: ${{ env.OPENAI_API_KEY != '' }}
-        run: uv run python -m openagentlab.evaluation ragas --dataset evaluation/datasets/smoke.jsonl --tags smoke
+        run: uv run python -m openagentlab.evaluation ragas --dataset evaluation/datasets/smoke.jsonl --tags smoke | tee evaluation-results/ragas-summary.json
+      - name: Upload LLM evaluation results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: llm-evaluation-results
+          path: evaluation-results/

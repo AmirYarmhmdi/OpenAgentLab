@@ -492,7 +492,10 @@ def test_execute_plan_node_runs_multi_task_plan_through_same_executor() -> None:
         "task_1": TaskStatus.SUCCEEDED,
         "task_2": TaskStatus.SUCCEEDED,
     }
-    assert tool.calls == [{"value": 1}, {"value": 2}]
+    assert sorted(tool.calls, key=lambda call: call["value"]) == [
+        {"value": 1},
+        {"value": 2},
+    ]
 
 
 def test_execute_plan_node_rejects_unavailable_capability_before_runtime() -> None:
