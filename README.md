@@ -16,51 +16,47 @@ The project follows a **Design First** philosophy, with architecture and enginee
 
 ## Key Features
 
-- 📄 Upload PDF documents
-- 📊 Upload Excel workbooks
-- 📈 Upload CSV datasets
-- 💬 Ask natural language questions
-- 🤖 AI Agent plans the execution workflow
-- 🛠 Intelligent Tool Calling
-- 🔍 Retrieval-Augmented Generation (RAG)
-- 📚 Multi-document reasoning
-- 📑 Structured report generation
-- 📡 Production-grade observability
-- ✅ Automated AI evaluation
+- Upload and persist supported files: PDF, CSV, XLSX, DOCX, TXT, and Markdown
+- Deterministic document-processing tools for PDF, Excel, CSV, TXT, JSON, and DOCX
+- Ask natural language questions over indexed document context
+- RAG pipeline for loading, chunking, embedding, indexing, retrieval, and context construction
+- LangGraph-based agent workflow components for planning, tool selection, execution, and response generation
+- Workflow execution persistence and status lookup APIs
+- Local storage plus PostgreSQL metadata persistence
+- Qdrant vector search integration
+- Optional Langfuse observability with redaction and LangChain/LangGraph callbacks
+- Automated unit, integration, Docker, and AI evaluation workflows
 
 ---
 
 # Architecture Overview
 
 ```
-                +----------------------+
-                |      REST API        |
-                |      FastAPI         |
-                +----------+-----------+
-                           |
-                           v
-                +----------------------+
-                |      LangGraph       |
-                |   Agent Workflow     |
-                +----------+-----------+
-                           |
-        +------------------+------------------+
-        |                  |                  |
-        v                  v                  v
-  PDF Reader        Excel Reader       CSV Reader
-        |                  |                  |
-        +---------+--------+------------------+
-                  |
-                  v
-            Retrieval Layer
-        (Embeddings + Qdrant)
-                  |
-                  v
-              OpenAI LLM
-                  |
-                  v
-           Response Generation
+                  +----------------------+
+                  |      REST API        |
+                  |      FastAPI         |
+                  +----------+-----------+
+                             |
+          +------------------+------------------+
+          |                  |                  |
+          v                  v                  v
+   Document APIs      Question APIs      Workflow APIs
+          |                  |                  |
+          v                  v                  v
+ Local Storage +      RAG Retrieval      PostgreSQL
+ PostgreSQL Metadata  (OpenAI + Qdrant)  Workflow State
+                             |
+                  +----------+-----------+
+                  | Context Builder      |
+                  | + Source Metadata    |
+                  +----------+-----------+
+                             |
+                             v
+                  OpenAI Response Generation
 ```
+
+Agent components provide LangGraph planning, tool selection, deterministic tool
+execution, and response nodes for orchestrated workflows.
 
 ---
 
@@ -83,14 +79,13 @@ The first version of OpenAgentLab is intentionally focused on a modern productio
 | Containerization | Docker |
 | Local Orchestration | Docker Compose |
 | Observability | Langfuse |
-| AI Evaluation | DeepEval |
-| RAG Evaluation | Ragas |
+| AI Evaluation | DeepEval, Ragas |
 | CI | GitHub Actions |
 | Cloud | Microsoft Azure |
 
 ---
 
-# Planned Phase 2
+# Planned Evolution
 
 The architecture has been designed to support additional production capabilities without major refactoring.
 
@@ -112,18 +107,35 @@ These technologies are intentionally planned for a later phase to keep the MVP f
 ```
 OpenAgentLab/
 
-├── app/
+├── src/
+│   └── openagentlab/
+│       ├── agent/
+│       ├── api/
+│       ├── core/
+│       ├── database/
+│       ├── evaluation/
+│       ├── observability/
+│       ├── rag/
+│       ├── repositories/
+│       ├── services/
+│       ├── skills/
+│       ├── storage/
+│       └── tools/
 ├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── evaluation/
+│   └── e2e/
 ├── docs/
-│
-├── architecture/
-├── ADR/
-├── engineering/
-│
-├── docker/
-├── scripts/
-├── storage/
+│   ├── architecture/
+│   ├── ADR/
+│   └── engineering/
+├── evaluation/
+│   └── datasets/
 ├── alembic/
+├── deployment/
+├── docker/
+├── storage/
 ├── .github/
 │
 ├── Dockerfile
@@ -164,10 +176,23 @@ Official health endpoint:
 GET http://localhost:8000/api/v1/health
 ```
 
+Current v1 API surface:
+
+- `POST /api/v1/documents`: upload a supported document
+- `GET /api/v1/documents`: list stored document metadata
+- `POST /api/v1/questions`: ask a question, optionally scoped to document IDs
+- `GET /api/v1/workflows/{workflow_id}`: inspect workflow execution status
+
 Run tests:
 
 ```bash
 uv run pytest
+```
+
+Run database migrations when using PostgreSQL-backed services:
+
+```bash
+uv run alembic upgrade head
 ```
 
 ## Local Docker Infrastructure
@@ -272,62 +297,67 @@ OpenAgentLab follows several software engineering principles.
 
 ## Phase 2 — Foundation
 
-- [ ] FastAPI
-- [ ] Docker
-- [ ] Docker Compose
-- [ ] PostgreSQL
-- [ ] Alembic
-- [ ] SQLAlchemy
-- [ ] GitHub Actions
+- [x] FastAPI
+- [x] Docker
+- [x] Docker Compose
+- [x] PostgreSQL
+- [x] Alembic
+- [x] SQLAlchemy
+- [x] GitHub Actions
 
 ---
 
 ## Phase 3 — Document Management
 
-- [ ] File Upload
-- [ ] Storage Layer
-- [ ] Metadata Management
+- [x] File Upload
+- [x] Storage Layer
+- [x] Metadata Management
 
 ---
 
 ## Phase 4 — AI Tools
 
-- [ ] PDF Reader
-- [ ] Excel Reader
-- [ ] CSV Reader
+- [x] PDF Reader
+- [x] Excel Reader
+- [x] CSV Reader
+- [x] Text Reader
+- [x] JSON Reader
+- [x] DOCX Reader
 
 ---
 
 ## Phase 5 — RAG
 
-- [ ] Embedding Pipeline
-- [ ] Qdrant
-- [ ] Retrieval
-- [ ] Context Construction
+- [x] Embedding Pipeline
+- [x] Qdrant
+- [x] Retrieval
+- [x] Context Construction
 
 ---
 
 ## Phase 6 — Agent
 
-- [ ] LangGraph
-- [ ] Tool Calling
-- [ ] Workflow Engine
+- [x] LangGraph
+- [x] Tool Calling
+- [x] Workflow Engine
 
 ---
 
 ## Phase 7 — Observability
 
-- [ ] Langfuse
-- [ ] Structured Logging
-- [ ] Tracing
+- [x] Langfuse integration
+- [x] Structured Logging
+- [x] Trace redaction and callback helpers
+- [ ] Production dashboards and alerting
 
 ---
 
 ## Phase 8 — Evaluation
 
-- [ ] DeepEval
-- [ ] Ragas
-- [ ] GitHub Actions Integration
+- [x] DeepEval
+- [x] Ragas
+- [x] GitHub Actions Integration
+- [ ] Larger production-quality golden datasets
 
 ---
 
@@ -359,11 +389,17 @@ Future milestones include:
 
 # Current Status
 
-🚧 This project is currently under active development.
+This project is under active development.
 
-The architecture and engineering documentation are complete.
+The design documentation and backend foundation are in place. The current
+implementation includes document upload/list APIs, persisted file metadata,
+workflow status APIs, deterministic reader tools, RAG infrastructure, LangGraph
+agent components, optional Langfuse observability, and automated evaluation
+infrastructure.
 
-Implementation is currently in progress.
+Remaining work is focused on production deployment, richer golden datasets,
+authentication and authorization, streaming responses, user-facing clients, and
+operational hardening.
 
 ---
 
