@@ -24,6 +24,13 @@ COPY alembic ./alembic
 COPY src ./src
 RUN uv sync --frozen --no-dev --no-editable
 
+RUN groupadd --system app && \
+    useradd --system --gid app --home-dir /app --shell /usr/sbin/nologin app && \
+    mkdir -p /app/storage && \
+    chown -R app:app /app
+
+USER app
+
 EXPOSE 8000
 
 CMD ["uvicorn", "openagentlab.main:app", "--host", "0.0.0.0", "--port", "8000"]

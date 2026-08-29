@@ -37,3 +37,13 @@ def create_database_engine(database_url: str | None = None) -> AsyncEngine:
 def get_engine(database_url: str | None = None) -> AsyncEngine:
     """Return a cached async engine for the configured database."""
     return create_database_engine(database_url)
+
+
+async def dispose_engine() -> None:
+    """Dispose the cached database engine when one has been created."""
+    if get_engine.cache_info().currsize == 0:
+        return
+
+    engine = get_engine()
+    await engine.dispose()
+    get_engine.cache_clear()

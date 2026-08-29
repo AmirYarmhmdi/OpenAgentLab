@@ -8,6 +8,25 @@
 
 from fastapi.testclient import TestClient
 from helpers import create_isolated_app
+from sqlalchemy.exc import SQLAlchemyError
+
+from openagentlab.database.session import get_async_session
+
+
+class FakeSession:
+    def __init__(self, *, error: Exception | None = None) -> None:
+        self.error = error
+
+    async def execute(self, query) -> None:
+        if self.error is not None:
+            raise self.error
+
+
+def override_session(session: FakeSession):
+    async def dependency():
+        yield session
+
+    return dependency
 
 
 # This checks the official health endpoint response.
@@ -22,6 +41,32 @@ def test_health_endpoint_returns_ok(monkeypatch) -> None:
         "version": "0.1.0",
         "environment": "development",
     }
+
+
+def test_readiness_endpoint_returns_ready(monkeypatch) -> None:
+    app = create_isolated_app(monkeypatch)
+    app.dependency_overrides[get_async_session] = override_session(FakeSession())
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_readiness_endpoint_returns_service_unavailable_on_database_failure(
+    monkeypatch,
+) -> None:
+    app = create_isolated_app(monkeypatch)
+    app.dependency_overrides[get_async_session] = override_session(
+        FakeSession(error=SQLAlchemyError("database unavailable")),
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Database is unavailable."}
 
 
 # This checks that the optional root endpoint stays simple.

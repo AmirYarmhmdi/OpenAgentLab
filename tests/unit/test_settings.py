@@ -53,7 +53,27 @@ def test_environment_variables_override_defaults(monkeypatch) -> None:
 def test_local_storage_root_has_development_default(monkeypatch) -> None:
     clear_settings_env(monkeypatch)
 
+    assert Settings().STORAGE_BACKEND == "local"
     assert Settings().LOCAL_STORAGE_ROOT == "storage"
+
+
+def test_runtime_configuration_overrides_storage_backend_and_secrets(
+    monkeypatch,
+) -> None:
+    clear_settings_env(monkeypatch)
+    monkeypatch.setenv("STORAGE_BACKEND", "azure_blob")
+    monkeypatch.setenv("OPENAI_API_KEY", "runtime-openai-key")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://runtime-db")
+    monkeypatch.setenv("QDRANT_API_KEY", "runtime-qdrant-key")
+    monkeypatch.setenv("LANGFUSE_SECRET_KEY", "runtime-langfuse-secret")
+
+    settings = Settings()
+
+    assert settings.STORAGE_BACKEND == "azure_blob"
+    assert settings.OPENAI_API_KEY == "runtime-openai-key"
+    assert settings.DATABASE_URL == "postgresql+asyncpg://runtime-db"
+    assert settings.QDRANT_API_KEY == "runtime-qdrant-key"
+    assert settings.LANGFUSE_SECRET_KEY == "runtime-langfuse-secret"
 
 
 def test_rag_settings_have_development_defaults(monkeypatch) -> None:

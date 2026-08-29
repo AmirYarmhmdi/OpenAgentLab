@@ -45,6 +45,10 @@ from openagentlab.storage.local import LocalStorageProvider
 def get_storage_provider(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> StorageProvider:
+    if settings.STORAGE_BACKEND != "local":
+        raise RuntimeError(
+            f"Storage backend is not implemented: {settings.STORAGE_BACKEND}"
+        )
     return LocalStorageProvider(settings.LOCAL_STORAGE_ROOT)
 
 
@@ -61,6 +65,7 @@ def get_workflow_execution_repository(
 
 
 def get_upload_service(
+    settings: Annotated[Settings, Depends(get_settings)],
     storage_provider: Annotated[StorageProvider, Depends(get_storage_provider)],
     file_metadata_repository: Annotated[
         FileMetadataRepository,
@@ -70,6 +75,7 @@ def get_upload_service(
     return UploadService(
         storage_provider=storage_provider,
         file_metadata_repository=file_metadata_repository,
+        storage_backend=settings.STORAGE_BACKEND,
     )
 
 

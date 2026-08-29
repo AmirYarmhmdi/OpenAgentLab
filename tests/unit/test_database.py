@@ -8,8 +8,11 @@
 """
 
 import asyncio
+from pathlib import Path
 
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from helpers import clear_settings_env
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +20,8 @@ from openagentlab.core.config import Settings
 from openagentlab.database import Base, models
 from openagentlab.database.engine import create_database_engine, get_database_url
 from openagentlab.database.session import create_session_factory
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_all_initial_models_are_registered_with_metadata() -> None:
@@ -89,6 +94,20 @@ def test_database_url_is_required_before_connecting(monkeypatch) -> None:
 
     with pytest.raises(RuntimeError, match="DATABASE_URL must be set"):
         get_database_url(settings)
+
+
+def test_alembic_ini_does_not_define_a_deployment_database_url() -> None:
+    config = Config(PROJECT_ROOT / "alembic.ini")
+
+    assert config.get_main_option("sqlalchemy.url") == ""
+
+
+def test_alembic_revision_history_has_one_head() -> None:
+    config = Config(PROJECT_ROOT / "alembic.ini")
+    script = ScriptDirectory.from_config(config)
+
+    assert script.get_heads() == ["20260807_0002"]
+    assert script.get_current_head() == "20260807_0002"
 
 
 def test_async_engine_and_session_factory_use_asyncpg_url() -> None:

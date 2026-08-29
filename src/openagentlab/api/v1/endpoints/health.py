@@ -7,9 +7,13 @@
   openagentlab.schemas.health.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from openagentlab.core.config import get_settings
+from openagentlab.database.session import get_async_session
 from openagentlab.schemas.health import HealthResponse
 
 # This router holds the health endpoint routes.
@@ -27,3 +31,18 @@ def health_check() -> HealthResponse:
         version=settings.APP_VERSION,
         environment=settings.ENVIRONMENT,
     )
+
+
+@router.get("/ready", status_code=status.HTTP_200_OK)
+async def readiness_check(
+    session: AsyncSession = Depends(get_async_session),  # noqa: B008
+) -> dict[str, str]:
+    try:
+        await session.execute(text("SELECT 1"))
+    except SQLAlchemyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is unavailable.",
+        ) from exc
+
+    return {"status": "ready"}

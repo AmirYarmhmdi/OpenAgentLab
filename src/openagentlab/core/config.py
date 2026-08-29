@@ -7,6 +7,7 @@
 """
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,6 +51,7 @@ class Settings(BaseSettings):
     LANGFUSE_SECRET_KEY: str | None = None
     LANGFUSE_BASE_URL: str | None = None
     LOCAL_STORAGE_ROOT: str = "storage"
+    STORAGE_BACKEND: Literal["local", "azure_blob"] = "local"
 
     # This tells pydantic-settings to also read values from a local .env file.
     model_config = SettingsConfigDict(
