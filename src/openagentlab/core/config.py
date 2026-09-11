@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     LANGFUSE_BASE_URL: str | None = None
     LOCAL_STORAGE_ROOT: str = "storage"
     STORAGE_BACKEND: Literal["local", "azure_blob"] = "local"
+    AZURE_STORAGE_ACCOUNT_NAME: str | None = None
+    AZURE_STORAGE_CONTAINER_NAME: str | None = None
+    AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID: str | None = None
 
     # This tells pydantic-settings to also read values from a local .env file.
     model_config = SettingsConfigDict(

@@ -14,6 +14,7 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 
 from fastapi import FastAPI
 
+from openagentlab.api.dependencies import close_storage_providers
 from openagentlab.api.router import router as api_router
 from openagentlab.core.config import Settings, get_settings
 from openagentlab.core.exceptions import register_exception_handlers
@@ -42,6 +43,7 @@ def create_lifespan(
             yield
         finally:
             shutdown_observability(settings)
+            await close_storage_providers()
             await dispose_engine()
             logger.info("Stopping %s", settings.APP_NAME)
 

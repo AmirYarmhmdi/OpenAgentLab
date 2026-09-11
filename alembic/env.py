@@ -29,6 +29,11 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def escape_database_url_for_config_parser(database_url: str) -> str:
+    """Escape percent signs before storing URLs in Alembic's ConfigParser."""
+    return database_url.replace("%", "%%")
+
+
 def run_migrations_offline() -> None:
     """Run migrations without a live database connection."""
     url = get_database_url()
@@ -52,7 +57,10 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations with SQLAlchemy's async engine."""
-    config.set_main_option("sqlalchemy.url", get_database_url())
+    config.set_main_option(
+        "sqlalchemy.url",
+        escape_database_url_for_config_parser(get_database_url()),
+    )
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

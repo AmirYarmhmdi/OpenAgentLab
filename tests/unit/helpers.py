@@ -8,6 +8,7 @@
 
 import importlib
 import sys
+from types import ModuleType
 
 # These are the settings variables that can affect the Phase 3 app.
 SETTINGS_ENV_VARS = (
@@ -45,6 +46,9 @@ SETTINGS_ENV_VARS = (
     "LANGFUSE_BASE_URL",
     "LOCAL_STORAGE_ROOT",
     "STORAGE_BACKEND",
+    "AZURE_STORAGE_ACCOUNT_NAME",
+    "AZURE_STORAGE_CONTAINER_NAME",
+    "AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID",
 )
 
 
@@ -58,9 +62,27 @@ def clear_settings_env(monkeypatch) -> None:
     get_settings.cache_clear()
 
 
+def _remove_module(module_name: str) -> None:
+    sys.modules.pop(module_name, None)
+
+    package_name, _, child_name = module_name.rpartition(".")
+    package = sys.modules.get(package_name)
+    if isinstance(package, ModuleType) and hasattr(package, child_name):
+        delattr(package, child_name)
+
+
 # This creates a fresh app that is not affected by the developer shell.
 def create_isolated_app(monkeypatch):
     clear_settings_env(monkeypatch)
+
+    from openagentlab.api import dependencies
+    from openagentlab.database.engine import get_engine
+    from openagentlab.database.session import get_session_factory
+
+    dependencies._get_local_storage_provider.cache_clear()
+    dependencies._get_azure_blob_storage_provider.cache_clear()
+    get_session_factory.cache_clear()
+    get_engine.cache_clear()
 
     # Remove imported app modules so they reload with clean settings.
     for module_name in (
@@ -73,7 +95,7 @@ def create_isolated_app(monkeypatch):
         "openagentlab.api.v1.endpoints.workflows",
         "openagentlab.api.dependencies",
     ):
-        sys.modules.pop(module_name, None)
+        _remove_module(module_name)
 
     # Import the main module again and build a fresh FastAPI app.
     main = importlib.import_module("openagentlab.main")

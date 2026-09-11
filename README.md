@@ -60,6 +60,66 @@ execution, and response nodes for orchestrated workflows.
 
 ---
 
+## Production Deployment Architecture
+
+OpenAgentLab is packaged as a Docker image and deployed as an Azure Container
+App. The container runs the FastAPI application, agent orchestration layer,
+LangGraph workflows, SQLAlchemy data access, async PostgreSQL connectivity,
+tools, skills, and all runtime dependencies.
+
+```
+Git Repository
+│
+├── src/
+│   ├── OpenAgentLab application code
+│   ├── Agents and orchestration
+│   ├── LangGraph workflows
+│   ├── FastAPI routes
+│   ├── SQLAlchemy models and repositories
+│   ├── Tools and skills
+│   └── Supporting services
+│
+└── Dockerfile
+        │
+        │ docker build
+        v
+Docker Image
+openagentlab:dev
+        │
+        │ docker push
+        v
+Azure Container Registry
+        │
+        │ image pull
+        v
+Azure Container App
+│
+├── Runtime
+│   ├── Python
+│   ├── OpenAgentLab source code
+│   ├── FastAPI
+│   ├── Agents and orchestration
+│   ├── LangGraph workflows
+│   ├── SQLAlchemy
+│   ├── asyncpg
+│   └── Application dependencies
+│
+├──────────────→ Azure PostgreSQL
+│                structured data and metadata
+│
+├──────────────→ Azure Blob Storage
+│                uploaded files and generated artifacts
+│
+└──────────────→ Qdrant Cloud
+                 vectors and embeddings
+```
+
+In production, the container app remains stateless. Durable data is stored in
+managed external services: PostgreSQL for structured application state and
+metadata, Azure Blob Storage for files, and Qdrant Cloud for vector search.
+
+---
+
 # Technology Stack
 
 ## MVP

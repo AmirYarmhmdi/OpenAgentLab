@@ -55,6 +55,9 @@ def test_local_storage_root_has_development_default(monkeypatch) -> None:
 
     assert Settings().STORAGE_BACKEND == "local"
     assert Settings().LOCAL_STORAGE_ROOT == "storage"
+    assert Settings().AZURE_STORAGE_ACCOUNT_NAME is None
+    assert Settings().AZURE_STORAGE_CONTAINER_NAME is None
+    assert Settings().AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID is None
 
 
 def test_runtime_configuration_overrides_storage_backend_and_secrets(
@@ -66,6 +69,12 @@ def test_runtime_configuration_overrides_storage_backend_and_secrets(
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://runtime-db")
     monkeypatch.setenv("QDRANT_API_KEY", "runtime-qdrant-key")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "runtime-langfuse-secret")
+    monkeypatch.setenv("AZURE_STORAGE_ACCOUNT_NAME", "openagentlabstorage")
+    monkeypatch.setenv("AZURE_STORAGE_CONTAINER_NAME", "openagentlab-files")
+    monkeypatch.setenv(
+        "AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID",
+        "11111111-1111-4111-8111-111111111111",
+    )
 
     settings = Settings()
 
@@ -74,6 +83,12 @@ def test_runtime_configuration_overrides_storage_backend_and_secrets(
     assert settings.DATABASE_URL == "postgresql+asyncpg://runtime-db"
     assert settings.QDRANT_API_KEY == "runtime-qdrant-key"
     assert settings.LANGFUSE_SECRET_KEY == "runtime-langfuse-secret"
+    assert settings.AZURE_STORAGE_ACCOUNT_NAME == "openagentlabstorage"
+    assert settings.AZURE_STORAGE_CONTAINER_NAME == "openagentlab-files"
+    assert (
+        settings.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID
+        == "11111111-1111-4111-8111-111111111111"
+    )
 
 
 def test_rag_settings_have_development_defaults(monkeypatch) -> None:

@@ -43,6 +43,7 @@ class QdrantVectorStore:
         client: Any | None = None,
         settings: Settings | None = None,
         ensure_collection: bool = True,
+        wait: bool | None = None,
     ) -> None:
         if dimension <= 0:
             msg = "Vector dimension must be greater than zero."
@@ -73,15 +74,24 @@ class QdrantVectorStore:
         )
         self._client = client or self._build_client()
         self._models: Any | None = None
+        self._wait = wait
 
         if ensure_collection:
             self.ensure_collection()
+
+    def collection_exists(self) -> bool:
+        """Return whether the configured Qdrant collection exists."""
+        try:
+            return bool(self._client.collection_exists(self.collection_name))
+        except Exception as exc:
+            msg = f"Could not check Qdrant collection: {self.collection_name}"
+            raise VectorStoreError(msg) from exc
 
     def ensure_collection(self) -> None:
         models = self._qdrant_models()
 
         try:
-            exists = self._client.collection_exists(self.collection_name)
+            exists = self.collection_exists()
             if not exists:
                 self._client.create_collection(
                     collection_name=self.collection_name,
@@ -130,8 +140,7 @@ class QdrantVectorStore:
 
         try:
             self._client.upsert(
-                collection_name=self.collection_name,
-                points=points,
+                **self._upsert_kwargs(points),
             )
         except Exception as exc:
             msg = (
@@ -218,6 +227,15 @@ class QdrantVectorStore:
                 "Could not delete chunks from Qdrant collection: "
                 f"{self.collection_name}"
             )
+            raise VectorStoreError(msg) from exc
+
+    def delete_collection(self) -> None:
+        """Delete the configured Qdrant collection if it exists."""
+        try:
+            if self.collection_exists():
+                self._client.delete_collection(collection_name=self.collection_name)
+        except Exception as exc:
+            msg = f"Could not delete Qdrant collection: {self.collection_name}"
             raise VectorStoreError(msg) from exc
 
     def _build_client(self) -> Any:
@@ -363,3 +381,12 @@ class QdrantVectorStore:
             first_vector = next(iter(vectors.values()), None)
             return getattr(first_vector, "size", None)
         return getattr(vectors, "size", None)
+
+    def _upsert_kwargs(self, points: list[Any]) -> dict[str, Any]:
+        kwargs: dict[str, Any] = {
+            "collection_name": self.collection_name,
+            "points": points,
+        }
+        if self._wait is not None:
+            kwargs["wait"] = self._wait
+        return kwargs

@@ -60,6 +60,7 @@ class FakeQdrantClient:
         self.upserts: list[dict[str, object]] = []
         self.searches: list[dict[str, object]] = []
         self.deletes: list[dict[str, object]] = []
+        self.deleted_collections: list[str] = []
         self.search_points = [
             SimpleNamespace(
                 id="point-1",
@@ -98,8 +99,16 @@ class FakeQdrantClient:
             )
         )
 
-    def upsert(self, *, collection_name: str, points: list[object]) -> None:
-        self.upserts.append({"collection_name": collection_name, "points": points})
+    def upsert(
+        self,
+        *,
+        collection_name: str,
+        points: list[object],
+        wait: bool | None = None,
+    ) -> None:
+        self.upserts.append(
+            {"collection_name": collection_name, "points": points, "wait": wait}
+        )
 
     def search(self, **kwargs) -> list[object]:
         self.searches.append(kwargs)
@@ -110,6 +119,10 @@ class FakeQdrantClient:
             {"collection_name": collection_name, "points_selector": points_selector}
         )
 
+    def delete_collection(self, *, collection_name: str) -> None:
+        self.deleted_collections.append(collection_name)
+        self._collection_exists = False
+
 
 def qdrant_store(client: FakeQdrantClient | None = None) -> QdrantVectorStore:
     store = QdrantVectorStore(
@@ -117,6 +130,18 @@ def qdrant_store(client: FakeQdrantClient | None = None) -> QdrantVectorStore:
         dimension=2,
         client=client or FakeQdrantClient(),
         ensure_collection=False,
+    )
+    store._models = FakeModels
+    return store
+
+
+def qdrant_store_with_wait(client: FakeQdrantClient | None = None) -> QdrantVectorStore:
+    store = QdrantVectorStore(
+        collection_name="test_chunks",
+        dimension=2,
+        client=client or FakeQdrantClient(),
+        ensure_collection=False,
+        wait=True,
     )
     store._models = FakeModels
     return store
@@ -167,6 +192,16 @@ def test_qdrant_store_upsert_builds_payload() -> None:
     assert point.payload["document_id"] == "doc-1"
     assert point.payload["text"] == "hello world"
     assert point.payload["metadata"]["page_number"] == 1
+    assert client.upserts[0]["wait"] is None
+
+
+def test_qdrant_store_can_wait_for_upsert() -> None:
+    client = FakeQdrantClient()
+    store = qdrant_store_with_wait(client)
+
+    store.upsert([sample_chunk()], [[0.1, 0.2]])
+
+    assert client.upserts[0]["wait"] is True
 
 
 def test_qdrant_store_rejects_embedding_dimension_mismatch() -> None:
@@ -206,3 +241,13 @@ def test_qdrant_store_delete_by_chunk_ids_and_document_id() -> None:
     assert len(client.deletes) == 2
     assert client.deletes[0]["points_selector"].points
     assert client.deletes[1]["points_selector"].filter.must[0].key == "document_id"
+
+
+def test_qdrant_store_deletes_collection_when_it_exists() -> None:
+    client = FakeQdrantClient(collection_exists=True)
+    store = qdrant_store(client)
+
+    store.delete_collection()
+
+    assert client.deleted_collections == ["test_chunks"]
+    assert store.collection_exists() is False

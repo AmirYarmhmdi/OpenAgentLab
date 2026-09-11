@@ -8,6 +8,7 @@
   openagentlab.core, database, rag, repositories, services, and storage.
 """
 
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
@@ -38,6 +39,7 @@ from openagentlab.services.workflows import (
     RepositoryWorkflowStatusService,
     WorkflowStatusService,
 )
+from openagentlab.storage.azure_blob import AzureBlobStorageProvider
 from openagentlab.storage.base import StorageProvider
 from openagentlab.storage.local import LocalStorageProvider
 
@@ -45,11 +47,63 @@ from openagentlab.storage.local import LocalStorageProvider
 def get_storage_provider(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> StorageProvider:
-    if settings.STORAGE_BACKEND != "local":
-        raise RuntimeError(
-            f"Storage backend is not implemented: {settings.STORAGE_BACKEND}"
+    if settings.STORAGE_BACKEND == "local":
+        return _get_local_storage_provider(settings.LOCAL_STORAGE_ROOT)
+
+    if settings.STORAGE_BACKEND == "azure_blob":
+        account_name = _require_azure_storage_config(
+            settings.AZURE_STORAGE_ACCOUNT_NAME,
+            "AZURE_STORAGE_ACCOUNT_NAME",
         )
-    return LocalStorageProvider(settings.LOCAL_STORAGE_ROOT)
+        container_name = _require_azure_storage_config(
+            settings.AZURE_STORAGE_CONTAINER_NAME,
+            "AZURE_STORAGE_CONTAINER_NAME",
+        )
+        return _get_azure_blob_storage_provider(
+            account_name,
+            container_name,
+            settings.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
+        )
+
+    raise RuntimeError(f"Unsupported storage backend: {settings.STORAGE_BACKEND}")
+
+
+async def close_storage_providers() -> None:
+    for provider in tuple(_azure_blob_storage_providers):
+        await provider.aclose()
+        _azure_blob_storage_providers.remove(provider)
+
+    _get_local_storage_provider.cache_clear()
+    _get_azure_blob_storage_provider.cache_clear()
+
+
+@lru_cache
+def _get_local_storage_provider(storage_root: str) -> LocalStorageProvider:
+    return LocalStorageProvider(storage_root)
+
+
+@lru_cache
+def _get_azure_blob_storage_provider(
+    account_name: str,
+    container_name: str,
+    managed_identity_client_id: str | None,
+) -> AzureBlobStorageProvider:
+    provider = AzureBlobStorageProvider(
+        account_name=account_name,
+        container_name=container_name,
+        managed_identity_client_id=managed_identity_client_id,
+    )
+    _azure_blob_storage_providers.add(provider)
+    return provider
+
+
+def _require_azure_storage_config(value: str | None, name: str) -> str:
+    if value is None or not value.strip():
+        raise RuntimeError(f"{name} is required when STORAGE_BACKEND=azure_blob.")
+    return value.strip()
+
+
+_azure_blob_storage_providers: set[AzureBlobStorageProvider] = set()
 
 
 def get_file_metadata_repository(

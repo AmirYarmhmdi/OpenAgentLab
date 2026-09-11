@@ -8,15 +8,20 @@
 """
 
 import asyncio
+import importlib.util
+import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
+import alembic.context as alembic_context
 import pytest
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from helpers import clear_settings_env
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from openagentlab.core.config import Settings
+from openagentlab.core.config import Settings, get_settings
 from openagentlab.database import Base, models
 from openagentlab.database.engine import create_database_engine, get_database_url
 from openagentlab.database.session import create_session_factory
@@ -108,6 +113,89 @@ def test_alembic_revision_history_has_one_head() -> None:
 
     assert script.get_heads() == ["20260807_0002"]
     assert script.get_current_head() == "20260807_0002"
+
+
+def test_alembic_handles_percent_encoded_database_url_without_connecting(
+    monkeypatch,
+) -> None:
+    database_url = (
+        "postgresql+asyncpg://openagentlab:p%2Ass%25word@postgres/openagentlab"
+    )
+    offline_configure_kwargs = {}
+    online_engine_config = {}
+
+    class AlembicContextConfig:
+        config_file_name = None
+
+    @contextmanager
+    def transaction() -> Iterator[None]:
+        yield
+
+    clear_settings_env(monkeypatch)
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    get_settings.cache_clear()
+    monkeypatch.setattr(
+        alembic_context,
+        "config",
+        AlembicContextConfig(),
+        raising=False,
+    )
+    monkeypatch.setattr(alembic_context, "is_offline_mode", lambda: True)
+    monkeypatch.setattr(
+        alembic_context,
+        "configure",
+        lambda **kwargs: offline_configure_kwargs.update(kwargs),
+    )
+    monkeypatch.setattr(alembic_context, "begin_transaction", transaction)
+    monkeypatch.setattr(alembic_context, "run_migrations", lambda: None)
+
+    spec = importlib.util.spec_from_file_location(
+        "_test_alembic_env",
+        PROJECT_ROOT / "alembic" / "env.py",
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.modules.pop(spec.name, None)
+        get_settings.cache_clear()
+
+    class FakeConnection:
+        async def __aenter__(self) -> "FakeConnection":
+            return self
+
+        async def __aexit__(self, *args: object) -> None:
+            pass
+
+        async def run_sync(self, _callable: object) -> None:
+            pass
+
+    class FakeEngine:
+        def connect(self) -> FakeConnection:
+            return FakeConnection()
+
+        async def dispose(self) -> None:
+            online_engine_config["disposed"] = True
+
+    def fake_async_engine_from_config(
+        section: dict[str, str],
+        **_kwargs: object,
+    ) -> FakeEngine:
+        online_engine_config.update(section)
+        return FakeEngine()
+
+    module.config = Config()
+    module.get_database_url = lambda: database_url
+    module.async_engine_from_config = fake_async_engine_from_config
+
+    asyncio.run(module.run_async_migrations())
+
+    assert offline_configure_kwargs["url"] == database_url
+    assert online_engine_config["sqlalchemy.url"] == database_url
+    assert online_engine_config["disposed"] is True
 
 
 def test_async_engine_and_session_factory_use_asyncpg_url() -> None:
