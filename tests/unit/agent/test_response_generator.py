@@ -224,7 +224,7 @@ def test_openai_response_generator_requires_api_key_without_injected_client() ->
         settings=Settings(
             DEBUG=False,
             OPENAI_API_KEY=None,
-            OPENAGENTLAB_RESPONSE_MODEL="fake-model",
+            OPENAI_RESPONSE_MODEL="fake-model",
         )
     )
 

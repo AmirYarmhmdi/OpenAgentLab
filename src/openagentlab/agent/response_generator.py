@@ -25,8 +25,6 @@ from openagentlab.observability import (
     usage_details_from_response,
 )
 
-DEFAULT_OPENAI_RESPONSE_MODEL = "gpt-4.1-mini"
-
 RESPONSE_GENERATOR_INSTRUCTIONS = (
     "You are the response-generation component of OpenAgentLab.\n\n"
     "Produce a clear final answer to the user's request using only the supplied "
@@ -64,7 +62,7 @@ class ResponseGenerator(Protocol):
 class OpenAIResponseGeneratorConfig(BaseModel):
     """Configuration for the OpenAI response generator adapter."""
 
-    model: str = Field(default=DEFAULT_OPENAI_RESPONSE_MODEL, min_length=1)
+    model: str = Field(min_length=1)
     api_key: str | None = None
 
 
@@ -88,9 +86,9 @@ class OpenAIResponseGenerator:
         self._config = OpenAIResponseGeneratorConfig(
             model=model
             or (
-                resolved_settings.OPENAGENTLAB_RESPONSE_MODEL
+                resolved_settings.OPENAI_RESPONSE_MODEL
                 if resolved_settings is not None
-                else DEFAULT_OPENAI_RESPONSE_MODEL
+                else get_settings().OPENAI_RESPONSE_MODEL
             ),
             api_key=api_key
             or (

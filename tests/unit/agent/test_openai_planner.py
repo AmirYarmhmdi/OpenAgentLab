@@ -104,7 +104,7 @@ def test_openai_planner_requires_api_key_without_injected_client() -> None:
         settings=Settings(
             DEBUG=False,
             OPENAI_API_KEY=None,
-            OPENAGENTLAB_PLANNER_MODEL="fake-model",
+            OPENAI_PLANNER_MODEL="fake-model",
         )
     )
 

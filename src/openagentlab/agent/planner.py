@@ -23,8 +23,6 @@ from openagentlab.observability import (
 )
 from openagentlab.skills.capabilities import CapabilityPromptView
 
-DEFAULT_OPENAI_PLANNER_MODEL = "gpt-4.1-mini"
-
 PLANNER_INSTRUCTIONS = (
     "You are the orchestration planner for OpenAgentLab.\n\n"
     "Convert the user's request into a minimal executable plan.\n\n"
@@ -57,7 +55,7 @@ class Planner(Protocol):
 class OpenAIPlannerConfig(BaseModel):
     """Configuration for the OpenAI planner adapter."""
 
-    model: str = Field(default=DEFAULT_OPENAI_PLANNER_MODEL, min_length=1)
+    model: str = Field(min_length=1)
     api_key: str | None = None
 
 
@@ -81,9 +79,9 @@ class OpenAIPlanner:
         self._config = OpenAIPlannerConfig(
             model=model
             or (
-                resolved_settings.OPENAGENTLAB_PLANNER_MODEL
+                resolved_settings.OPENAI_PLANNER_MODEL
                 if resolved_settings is not None
-                else DEFAULT_OPENAI_PLANNER_MODEL
+                else get_settings().OPENAI_PLANNER_MODEL
             ),
             api_key=api_key
             or (

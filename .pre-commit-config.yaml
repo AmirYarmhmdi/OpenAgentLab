@@ -21,7 +21,7 @@ repos:
 
       - id: pytest
         name: Pytest
-        entry: uv run pytest
+        entry: uv run pytest -m "not evaluation"
         language: system
         pass_filenames: false
         always_run: true

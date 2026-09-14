@@ -19,14 +19,13 @@ from openagentlab.rag.exceptions import EmbeddingError
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 DEFAULT_OPENAI_EMBEDDING_DIMENSION = 1536
 
 
 class OpenAIEmbeddingConfig(BaseModel):
     """Configuration for the OpenAI embedding adapter."""
 
-    model: str = Field(default=DEFAULT_OPENAI_EMBEDDING_MODEL, min_length=1)
+    model: str = Field(min_length=1)
     dimension: int = Field(default=DEFAULT_OPENAI_EMBEDDING_DIMENSION, ge=1)
     batch_size: int = Field(default=100, ge=1)
     api_key: str | None = None
@@ -54,9 +53,9 @@ class OpenAIEmbeddingProvider:
         self._config = OpenAIEmbeddingConfig(
             model=model
             or (
-                resolved_settings.RAG_EMBEDDING_MODEL
+                resolved_settings.OPENAI_EMBEDDING_MODEL
                 if resolved_settings is not None
-                else DEFAULT_OPENAI_EMBEDDING_MODEL
+                else get_settings().OPENAI_EMBEDDING_MODEL
             ),
             dimension=dimension
             or (
