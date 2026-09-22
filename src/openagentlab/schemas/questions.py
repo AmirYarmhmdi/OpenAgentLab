@@ -35,4 +35,7 @@ class QuestionResponse(BaseModel):
 
     answer: str
     workflow_id: UUID | None = None
+    status: str = "answered"
+    message: str | None = None
     sources: tuple[dict[str, Any], ...] = ()
+    citations: tuple[dict[str, Any], ...] = ()

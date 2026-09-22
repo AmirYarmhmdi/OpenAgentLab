@@ -21,6 +21,7 @@ from openagentlab.database.base import Base, TimestampMixin
 from openagentlab.database.enums import ConversationSessionStatus
 
 if TYPE_CHECKING:
+    from openagentlab.database.models.conversation_message import ConversationMessage
     from openagentlab.database.models.document import Document
     from openagentlab.database.models.user import User
     from openagentlab.database.models.workflow_execution import WorkflowExecution
@@ -57,6 +58,11 @@ class ConversationSession(TimestampMixin, Base):
 
     user: Mapped[User | None] = relationship(back_populates="sessions")
     documents: Mapped[list[Document]] = relationship(back_populates="session")
+    messages: Mapped[list[ConversationMessage]] = relationship(
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="ConversationMessage.sequence",
+    )
     workflow_executions: Mapped[list[WorkflowExecution]] = relationship(
         back_populates="session",
     )

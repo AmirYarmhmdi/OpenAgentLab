@@ -24,8 +24,11 @@ from openagentlab.agent.schemas import ExecutionPlan, ExecutionTask, LiteralArgu
 from openagentlab.core.config import Settings
 from openagentlab.observability import (
     is_observability_enabled,
+    observed_span,
+    safe_update_observation,
     sanitize_for_observability,
     startup_observability,
+    trace_id_from_observation,
     usage_details_from_response,
     with_langgraph_callbacks,
 )
@@ -62,6 +65,7 @@ class FakeObservation:
     def __init__(self, start_kwargs: dict[str, Any]) -> None:
         self.start_kwargs = start_kwargs
         self.updates: list[dict[str, Any]] = []
+        self.trace_id = "trace-test"
 
     def update(self, **kwargs: Any) -> None:
         self.updates.append(kwargs)
@@ -228,7 +232,16 @@ def test_observable_graph_injects_callbacks_and_root_workflow(monkeypatch) -> No
     assert graph.config is not None
     assert isinstance(graph.config["callbacks"][0], callback_type)
     assert fake_client.observations[0].start_kwargs["as_type"] == "agent"
-    assert fake_client.observations[0].updates == [{"output": {"answer": "done"}}]
+    assert fake_client.observations[0].updates == [
+        {
+            "output": {
+                "keys": ["answer"],
+                "has_error": False,
+                "plan_step_count": 0,
+                "has_response": False,
+            }
+        }
+    ]
 
 
 def test_tool_execution_records_successful_tool_observation(monkeypatch) -> None:
@@ -258,7 +271,11 @@ def test_tool_execution_records_successful_tool_observation(monkeypatch) -> None
     assert observation.start_kwargs["name"] == "test.observe"
     assert observation.start_kwargs["input"] == {"text": "safe"}
     assert observation.start_kwargs["metadata"] == {"task_id": "task_1"}
-    assert observation.updates[0]["output"]["large"].endswith("...<truncated>")
+    assert observation.updates[0]["output"] == {
+        "type": "mapping",
+        "keys": ["large"],
+        "key_count": 1,
+    }
 
 
 def test_tool_execution_records_failure_without_changing_result(monkeypatch) -> None:
@@ -311,6 +328,15 @@ def test_generation_observation_captures_provider_usage(monkeypatch) -> None:
     observation = fake_client.observations[0]
     assert observation.start_kwargs["as_type"] == "generation"
     assert observation.start_kwargs["model"] == "fake-model"
+    assert observation.start_kwargs["input"] == {
+        "user_query_chars": 9,
+        "plan_step_count": 1,
+        "has_execution_plan": False,
+        "has_execution_result": False,
+        "has_tool_result": False,
+        "has_error": False,
+    }
+    assert observation.updates[0]["output"] == {"response_chars": 7}
     assert observation.updates[0]["usage_details"] == {
         "input_tokens": 10,
         "output_tokens": 3,
@@ -337,3 +363,62 @@ def test_usage_extraction_and_sanitization_are_conservative() -> None:
     assert sanitize_for_observability(
         {"OPENAI_API_KEY": "sk-secret", "file": b"abc"}
     ) == {"OPENAI_API_KEY": "[REDACTED]", "file": "<binary length=3>"}
+    assert sanitize_for_observability(
+        {
+            "storage_key": "files/private/content.pdf",
+            "local_path": "/tmp/private/content.pdf",
+            "nested": {"path": "/tmp/secret.txt"},
+        }
+    ) == {
+        "storage_key": "[REDACTED]",
+        "local_path": "[REDACTED]",
+        "nested": {"path": "[REDACTED]"},
+    }
+
+
+def test_observed_span_is_noop_when_langfuse_is_unavailable(monkeypatch) -> None:
+    monkeypatch.setattr(
+        langfuse_observability,
+        "_get_langfuse_client",
+        lambda settings=None: None,
+    )
+
+    with observed_span(name="test.noop", input={"path": "/tmp/private.txt"}) as span:
+        safe_update_observation(span, output={"storage_key": "files/private.txt"})
+
+
+def test_span_updates_are_sanitized_and_trace_id_is_extractable(monkeypatch) -> None:
+    fake_client = FakeLangfuseClient()
+    monkeypatch.setattr(
+        langfuse_observability,
+        "_get_langfuse_client",
+        lambda settings=None: fake_client,
+    )
+
+    with observed_span(
+        name="test.span",
+        input={"storage_key": "files/private/content.pdf"},
+        metadata={"document_id": "doc-1"},
+    ) as observation:
+        assert trace_id_from_observation(observation) == "trace-test"
+        safe_update_observation(
+            observation,
+            output={"local_path": "/tmp/private/content.pdf", "count": 1},
+        )
+
+    recorded = fake_client.observations[0]
+    assert recorded.start_kwargs["as_type"] == "span"
+    assert recorded.start_kwargs["input"] == {"storage_key": "[REDACTED]"}
+    assert recorded.updates == [{"output": {"local_path": "[REDACTED]", "count": 1}}]
+
+
+def test_observability_update_failures_do_not_escape() -> None:
+    class ExplodingObservation:
+        def update(self, **kwargs: Any) -> None:
+            _ = kwargs
+            raise RuntimeError("telemetry unavailable")
+
+    safe_update_observation(
+        ExplodingObservation(),
+        output={"path": "/tmp/private/content.txt"},
+    )

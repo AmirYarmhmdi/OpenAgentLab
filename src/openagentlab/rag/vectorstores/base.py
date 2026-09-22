@@ -34,5 +34,6 @@ class VectorStore(Protocol):
         *,
         chunk_ids: list[str] | None = None,
         document_id: str | None = None,
+        user_id: str | None = None,
     ) -> None:
         """Delete chunks by chunk IDs, document ID, or both."""

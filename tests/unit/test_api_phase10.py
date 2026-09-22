@@ -8,6 +8,7 @@
   openagentlab.services, and helpers.
 """
 
+import hashlib
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -29,6 +30,7 @@ DOCUMENT_ID = UUID("11111111-1111-4111-8111-111111111111")
 SECOND_DOCUMENT_ID = UUID("22222222-2222-4222-8222-222222222222")
 WORKFLOW_ID = UUID("33333333-3333-4333-8333-333333333333")
 NOW = datetime(2026, 8, 11, 12, 0, tzinfo=UTC)
+CHECKSUM = hashlib.sha256(b"hello").hexdigest()
 
 
 class FakeDocumentService:
@@ -39,8 +41,16 @@ class FakeDocumentService:
                 document_id=DOCUMENT_ID,
                 filename="report.txt",
                 content_type="text/plain",
-                status="stored",
+                status="indexed",
                 created_at=NOW,
+                size_bytes=5,
+                normalized_extension=".txt",
+                storage_key=f"files/{DOCUMENT_ID}/content.txt",
+                storage_backend="local",
+                checksum_sha256=CHECKSUM,
+                updated_at=NOW,
+                file_metadata_id=DOCUMENT_ID,
+                file_storage_status="stored",
             )
         ]
         self.fail_upload: AppException | None = None
@@ -93,9 +103,11 @@ class FakeWorkflowStatusService:
             raise WorkflowNotFoundError(workflow_id)
         return WorkflowStatusRecord(
             workflow_id=workflow_id,
+            session_id=UUID("55555555-5555-4555-8555-555555555555"),
             status="completed" if not self.failed else "failed",
             result=None if self.failed else {"answer": "done"},
             error="failed safely" if self.failed else None,
+            trace_id="trace-test",
             created_at=NOW,
             updated_at=NOW,
             started_at=NOW,
@@ -139,8 +151,17 @@ def test_upload_document_returns_document_status(api_client) -> None:
         "document_id": str(DOCUMENT_ID),
         "filename": "report.txt",
         "content_type": "text/plain",
-        "status": "stored",
+        "status": "indexed",
         "workflow_id": None,
+        "file_metadata_id": str(DOCUMENT_ID),
+        "normalized_extension": ".txt",
+        "size_bytes": 5,
+        "checksum_sha256": CHECKSUM,
+        "file_storage_status": "stored",
+        "indexing_error_code": None,
+        "indexing_error_message": None,
+        "created_at": "2026-08-11T12:00:00Z",
+        "updated_at": "2026-08-11T12:00:00Z",
     }
     assert document_service.uploads == [
         DocumentUpload(
@@ -184,8 +205,16 @@ def test_list_documents_returns_known_documents(api_client) -> None:
                 "id": str(DOCUMENT_ID),
                 "filename": "report.txt",
                 "content_type": "text/plain",
-                "status": "stored",
+                "status": "indexed",
                 "created_at": "2026-08-11T12:00:00Z",
+                "file_metadata_id": str(DOCUMENT_ID),
+                "normalized_extension": ".txt",
+                "size_bytes": 5,
+                "checksum_sha256": CHECKSUM,
+                "file_storage_status": "stored",
+                "indexing_error_code": None,
+                "indexing_error_message": None,
+                "updated_at": "2026-08-11T12:00:00Z",
             }
         ]
     }
@@ -250,6 +279,7 @@ def test_get_workflow_status_returns_completed_state(api_client) -> None:
 
     assert response.status_code == 200
     assert response.json()["status"] == "completed"
+    assert response.json()["session_id"] == "55555555-5555-4555-8555-555555555555"
     assert response.json()["result"] == {"answer": "done"}
     assert response.json()["error"] is None
 
@@ -282,5 +312,9 @@ def test_phase10_endpoints_are_in_openapi(api_client) -> None:
     paths = client.get("/openapi.json").json()["paths"]
 
     assert "/api/v1/documents" in paths
+    assert "/api/v1/messages" in paths
     assert "/api/v1/questions" in paths
+    assert "/api/v1/sessions" in paths
+    assert "/api/v1/sessions/{session_id}" in paths
+    assert "/api/v1/workflows" in paths
     assert "/api/v1/workflows/{workflow_id}" in paths

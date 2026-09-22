@@ -112,10 +112,10 @@ Files become immutable resources.
 
 The database stores only:
 
-- file identifiers
-- metadata
-- storage path
-- checksum
+- logical document identifiers and lifecycle status
+- linked file metadata
+- storage key/backend references
+- file size and checksum
 
 Business logic never accesses files directly.
 

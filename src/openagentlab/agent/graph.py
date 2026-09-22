@@ -73,11 +73,15 @@ class ObservableAgentGraph:
         config: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> Any:
-        workflow_metadata = _workflow_metadata(self._settings)
+        workflow_metadata = {
+            **_workflow_metadata(self._settings),
+            **_config_metadata(config),
+        }
         with observability.observed_workflow(
             name="agent.workflow",
-            input=input,
+            input=_observed_graph_input(input),
             metadata=workflow_metadata,
+            session_id=_metadata_string(workflow_metadata.get("session_id")),
             settings=self._settings,
         ) as observation:
             result = self._graph.invoke(
@@ -88,7 +92,10 @@ class ObservableAgentGraph:
                 ),
                 **kwargs,
             )
-            observation.update(output=observability.sanitize_for_observability(result))
+            observability.safe_update_observation(
+                observation,
+                output=_observed_graph_output(result),
+            )
             return result
 
     def __getattr__(self, name: str) -> Any:
@@ -103,3 +110,39 @@ def _workflow_metadata(settings: Settings | None) -> dict[str, str]:
         "environment": settings.ENVIRONMENT,
         "app_version": settings.APP_VERSION,
     }
+
+
+def _config_metadata(config: dict[str, Any] | None) -> dict[str, Any]:
+    if not config:
+        return {}
+    metadata = config.get("metadata")
+    if isinstance(metadata, dict):
+        return dict(metadata)
+    return {}
+
+
+def _metadata_string(value: Any) -> str | None:
+    return value if isinstance(value, str) and value else None
+
+
+def _observed_graph_input(input: Any) -> dict[str, Any]:
+    if isinstance(input, dict):
+        user_query = input.get("user_query")
+        return {
+            "keys": sorted(str(key) for key in input),
+            "user_query_chars": (
+                len(user_query) if isinstance(user_query, str) else None
+            ),
+        }
+    return {"input_type": type(input).__name__}
+
+
+def _observed_graph_output(result: Any) -> dict[str, Any]:
+    if isinstance(result, dict):
+        return {
+            "keys": sorted(str(key) for key in result),
+            "has_error": bool(result.get("error")),
+            "plan_step_count": len(result.get("plan") or ()),
+            "has_response": bool(result.get("response")),
+        }
+    return {"output_type": type(result).__name__}

@@ -139,7 +139,10 @@ The platform shall follow secure software engineering practices.
 - Sensitive information shall not appear in logs.
 - External services shall be accessed securely.
 
-Authentication and authorization are outside the MVP scope.
+Phase A authentication uses standards-based bearer JWT validation and local
+user ownership checks for data-bearing APIs. Future tenant membership, role
+hierarchies, sharing, and collaboration permissions remain outside the MVP
+scope.
 
 ---
 

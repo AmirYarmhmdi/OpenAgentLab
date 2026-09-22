@@ -21,6 +21,7 @@ from openagentlab.database.enums import FileStorageStatus
 
 if TYPE_CHECKING:
     from openagentlab.database.models.document import Document
+    from openagentlab.database.models.user import User
 
 
 class FileMetadata(TimestampMixin, Base):
@@ -49,6 +50,11 @@ class FileMetadata(TimestampMixin, Base):
         unique=True,
         nullable=True,
     )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        index=True,
+    )
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     storage_key: Mapped[str] = mapped_column(String(1024), nullable=False)
     storage_backend: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -64,3 +70,4 @@ class FileMetadata(TimestampMixin, Base):
     checksum_sha256: Mapped[str | None] = mapped_column(String(64))
 
     document: Mapped[Document | None] = relationship(back_populates="file_metadata")
+    user: Mapped[User | None] = relationship(back_populates="file_metadata")

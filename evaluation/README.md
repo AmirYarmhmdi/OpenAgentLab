@@ -5,6 +5,20 @@ live as JSONL records and can feed Ragas, DeepEval, or later evaluator adapters
 without duplicating goldens. The checked-in smoke dataset currently covers RAG
 context-building and agent tool-selection behavior.
 
+## What Is In This Folder
+
+| Part | Duty | Input | Outcome |
+| --- | --- | --- | --- |
+| `datasets/` | Stores versioned evaluation cases as JSONL. | Questions, expected answers, expected/retrieved contexts, tags, and metadata. | Validated goldens for smoke, regression, and evaluator-backed runs. |
+| `README.md` | Explains dataset format and evaluation commands. | Evaluation conventions and local/CI workflows. | A guide for adding and running evaluations. |
+
+## General Role
+
+This folder contains evaluation data and evaluator-facing documentation. The
+Python implementation that validates and runs these cases lives in
+`src/openagentlab/evaluation`, while tests for the evaluation layer live under
+`tests/unit/evaluation` and `tests/evaluation`.
+
 ## Dataset Format
 
 Each JSONL line is one `EvaluationCase` with:

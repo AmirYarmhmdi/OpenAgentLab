@@ -130,8 +130,12 @@ class OpenAIResponseGenerator:
                 name="agent.response_generator",
                 model=self._config.model,
                 input={
-                    "instructions": RESPONSE_GENERATOR_INSTRUCTIONS,
-                    "input": response_input,
+                    "user_query_chars": len(user_query),
+                    "plan_step_count": len(plan),
+                    "has_execution_plan": execution_plan is not None,
+                    "has_execution_result": execution_result is not None,
+                    "has_tool_result": tool_result is not None,
+                    "has_error": error is not None,
                 },
                 metadata={"component": "response_generator"},
                 settings=self._settings,
@@ -143,7 +147,11 @@ class OpenAIResponseGenerator:
                 )
                 observation.update(
                     output=sanitize_for_observability(
-                        getattr(response, "output_text", None)
+                        {
+                            "response_chars": len(
+                                getattr(response, "output_text", "") or ""
+                            )
+                        }
                     ),
                     usage_details=usage_details_from_response(response),
                 )

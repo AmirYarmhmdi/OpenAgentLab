@@ -69,15 +69,15 @@ def test_readiness_endpoint_returns_service_unavailable_on_database_failure(
     assert response.json() == {"detail": "Database is unavailable."}
 
 
-# This checks that the optional root endpoint stays simple.
-def test_root_endpoint_returns_running_status(monkeypatch) -> None:
+# This checks that the optional root endpoint stays minimal and non-sensitive.
+def test_root_endpoint_returns_minimal_service_metadata(monkeypatch) -> None:
     with TestClient(create_isolated_app(monkeypatch)) as client:
         response = client.get("/")
 
     assert response.status_code == 200
     assert response.json() == {
         "service": "OpenAgentLab",
-        "status": "running",
+        "version": "0.1.0",
     }
 
 

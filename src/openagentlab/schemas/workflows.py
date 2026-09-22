@@ -19,10 +19,34 @@ class WorkflowStatusResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     workflow_id: UUID
+    session_id: UUID
     status: str
     result: dict[str, Any] | None = None
     error: str | None = None
+    trace_id: str | None = None
     created_at: datetime
     updated_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None
+
+
+class WorkflowListItem(BaseModel):
+    """Privacy-preserving workflow summary for recent-run selection."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    workflow_id: UUID
+    session_id: UUID
+    status: str
+    display_label: str
+    trace_id: str | None = None
+    created_at: datetime
+    updated_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+
+
+class WorkflowListResponse(BaseModel):
+    """Response envelope for recent workflow runs."""
+
+    workflows: list[WorkflowListItem]

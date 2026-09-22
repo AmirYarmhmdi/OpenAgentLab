@@ -26,6 +26,7 @@ from openagentlab.database.models.workflow_execution import WorkflowExecution
 
 @dataclass(frozen=True)
 class WorkflowExecutionRecord:
+    user_id: UUID | None
     id: UUID
     session_id: UUID
     workflow_name: str
@@ -49,6 +50,8 @@ class WorkflowExecutionRepository(Protocol):
         input_payload: dict[str, Any] | None = None,
         workflow_version: str | None = None,
         status: WorkflowExecutionStatus = WorkflowExecutionStatus.PENDING,
+        user_id: UUID,
+        session_id: UUID | None = None,
     ) -> WorkflowExecutionRecord:
         """Create a workflow execution record."""
 
@@ -56,6 +59,7 @@ class WorkflowExecutionRepository(Protocol):
         self,
         workflow_id: UUID,
         *,
+        user_id: UUID,
         output_payload: dict[str, Any] | None = None,
     ) -> WorkflowExecutionRecord:
         """Mark a workflow as completed."""
@@ -64,12 +68,35 @@ class WorkflowExecutionRepository(Protocol):
         self,
         workflow_id: UUID,
         *,
+        user_id: UUID,
         error_message: str,
     ) -> WorkflowExecutionRecord:
         """Mark a workflow as failed with a safe error message."""
 
-    async def get_by_id(self, workflow_id: UUID) -> WorkflowExecutionRecord | None:
+    async def set_trace_id(
+        self,
+        workflow_id: UUID,
+        *,
+        user_id: UUID,
+        trace_id: str,
+    ) -> WorkflowExecutionRecord:
+        """Attach an observability trace identifier to a workflow."""
+
+    async def get_by_id(
+        self,
+        workflow_id: UUID,
+        *,
+        user_id: UUID,
+    ) -> WorkflowExecutionRecord | None:
         """Return a workflow execution record by ID."""
+
+    async def list_recent(
+        self,
+        *,
+        user_id: UUID,
+        limit: int,
+    ) -> list[WorkflowExecutionRecord]:
+        """Return recent workflow execution records."""
 
 
 class SQLAlchemyWorkflowExecutionRepository:
@@ -85,15 +112,23 @@ class SQLAlchemyWorkflowExecutionRepository:
         input_payload: dict[str, Any] | None = None,
         workflow_version: str | None = None,
         status: WorkflowExecutionStatus = WorkflowExecutionStatus.PENDING,
+        user_id: UUID,
+        session_id: UUID | None = None,
     ) -> WorkflowExecutionRecord:
-        conversation_session = ConversationSession(
-            id=uuid4(),
-            title=workflow_name,
-            status=ConversationSessionStatus.ACTIVE.value,
-        )
+        conversation_session = None
+        if session_id is None:
+            session_id = uuid4()
+            conversation_session = ConversationSession(
+                id=session_id,
+                user_id=user_id,
+                title=workflow_name,
+                status=ConversationSessionStatus.ACTIVE.value,
+            )
+            self._session.add(conversation_session)
         record = WorkflowExecution(
             id=uuid4(),
-            session=conversation_session,
+            session_id=session_id,
+            user_id=user_id,
             workflow_name=workflow_name,
             workflow_version=workflow_version,
             status=status.value,
@@ -119,10 +154,12 @@ class SQLAlchemyWorkflowExecutionRepository:
         self,
         workflow_id: UUID,
         *,
+        user_id: UUID,
         output_payload: dict[str, Any] | None = None,
     ) -> WorkflowExecutionRecord:
         return await self._set_terminal_status(
             workflow_id,
+            user_id=user_id,
             status=WorkflowExecutionStatus.COMPLETED,
             output_payload=output_payload,
         )
@@ -131,30 +168,77 @@ class SQLAlchemyWorkflowExecutionRepository:
         self,
         workflow_id: UUID,
         *,
+        user_id: UUID,
         error_message: str,
     ) -> WorkflowExecutionRecord:
         return await self._set_terminal_status(
             workflow_id,
+            user_id=user_id,
             status=WorkflowExecutionStatus.FAILED,
             error_message=error_message,
         )
 
-    async def get_by_id(self, workflow_id: UUID) -> WorkflowExecutionRecord | None:
-        record = await self._get_model(workflow_id)
+    async def set_trace_id(
+        self,
+        workflow_id: UUID,
+        *,
+        user_id: UUID,
+        trace_id: str,
+    ) -> WorkflowExecutionRecord:
+        record = await self._get_model(workflow_id, user_id=user_id)
+        if record is None:
+            msg = f"Workflow execution not found: {workflow_id}"
+            raise KeyError(msg)
+
+        record.trace_id = trace_id
+
+        try:
+            await self._session.flush()
+            await self._session.refresh(record)
+            updated_record = _to_record(record)
+            await self._session.commit()
+        except Exception:
+            await self._session.rollback()
+            raise
+
+        return updated_record
+
+    async def get_by_id(
+        self,
+        workflow_id: UUID,
+        *,
+        user_id: UUID,
+    ) -> WorkflowExecutionRecord | None:
+        record = await self._get_model(workflow_id, user_id=user_id)
         if record is None:
             return None
 
         return _to_record(record)
 
+    async def list_recent(
+        self,
+        *,
+        user_id: UUID,
+        limit: int,
+    ) -> list[WorkflowExecutionRecord]:
+        result = await self._session.execute(
+            select(WorkflowExecution)
+            .where(WorkflowExecution.user_id == user_id)
+            .order_by(WorkflowExecution.created_at.desc())
+            .limit(limit),
+        )
+        return [_to_record(record) for record in result.scalars().all()]
+
     async def _set_terminal_status(
         self,
         workflow_id: UUID,
         *,
+        user_id: UUID,
         status: WorkflowExecutionStatus,
         output_payload: dict[str, Any] | None = None,
         error_message: str | None = None,
     ) -> WorkflowExecutionRecord:
-        record = await self._get_model(workflow_id)
+        record = await self._get_model(workflow_id, user_id=user_id)
         if record is None:
             msg = f"Workflow execution not found: {workflow_id}"
             raise KeyError(msg)
@@ -175,15 +259,24 @@ class SQLAlchemyWorkflowExecutionRepository:
 
         return updated_record
 
-    async def _get_model(self, workflow_id: UUID) -> WorkflowExecution | None:
+    async def _get_model(
+        self,
+        workflow_id: UUID,
+        *,
+        user_id: UUID,
+    ) -> WorkflowExecution | None:
         result = await self._session.execute(
-            select(WorkflowExecution).where(WorkflowExecution.id == workflow_id),
+            select(WorkflowExecution).where(
+                WorkflowExecution.id == workflow_id,
+                WorkflowExecution.user_id == user_id,
+            ),
         )
         return result.scalar_one_or_none()
 
 
 def _to_record(workflow: WorkflowExecution) -> WorkflowExecutionRecord:
     return WorkflowExecutionRecord(
+        user_id=workflow.user_id,
         id=workflow.id,
         session_id=workflow.session_id,
         workflow_name=workflow.workflow_name,

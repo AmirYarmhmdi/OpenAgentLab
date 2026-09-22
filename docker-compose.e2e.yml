@@ -1,0 +1,62 @@
+# File guide.
+# Use: Isolated Compose override for end-to-end tests.
+# Usage: docker compose -f docker-compose.e2e.yml up -d --wait postgres qdrant
+# Duties: Runs only disposable Postgres and Qdrant services for E2E tests.
+# Depends on: Docker Compose.
+
+name: openagentlab-e2e
+
+services:
+  postgres:
+    image: docker.io/postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openagentlab_e2e_test
+      POSTGRES_USER: openagentlab_e2e
+      POSTGRES_PASSWORD: openagentlab_e2e_password
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - openagentlab_e2e_postgres_data:/var/lib/postgresql/data
+    networks:
+      - openagentlab-e2e-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  qdrant:
+    image: docker.io/qdrant/qdrant:v1.18.3
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:16333:6333"
+      - "127.0.0.1:16334:6334"
+    volumes:
+      - openagentlab_e2e_qdrant_data:/qdrant/storage
+    networks:
+      - openagentlab-e2e-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/6333; printf \"GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"healthz check passed\" <&3'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+networks:
+  openagentlab-e2e-network:
+    name: openagentlab_e2e_network
+
+volumes:
+  openagentlab_e2e_postgres_data:
+    name: openagentlab_e2e_postgres_data
+  openagentlab_e2e_qdrant_data:
+    name: openagentlab_e2e_qdrant_data

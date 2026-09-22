@@ -113,8 +113,8 @@ class OpenAIPlanner:
                 name="agent.planner",
                 model=self._config.model,
                 input={
-                    "instructions": PLANNER_INSTRUCTIONS,
-                    "input": planner_input,
+                    "user_query_chars": len(user_query),
+                    "available_capability_count": len(available_capabilities),
                     "text_format": "ExecutionPlan",
                 },
                 metadata={"component": "planner"},
@@ -128,7 +128,7 @@ class OpenAIPlanner:
                 )
                 observation.update(
                     output=sanitize_for_observability(
-                        getattr(response, "output_parsed", None)
+                        _observed_plan_output(getattr(response, "output_parsed", None))
                     ),
                     usage_details=usage_details_from_response(response),
                 )
@@ -177,3 +177,12 @@ def _build_planner_input(
         f"User request:\n{user_query}\n\n"
         f"Available executable capabilities:\n{capability_payload}"
     )
+
+
+def _observed_plan_output(value: object) -> dict[str, object]:
+    if isinstance(value, ExecutionPlan):
+        return {
+            "task_count": len(value.tasks),
+            "capabilities": [task.capability for task in value.tasks],
+        }
+    return {"parsed": value is not None}

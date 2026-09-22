@@ -76,3 +76,10 @@ ipython_config.py
 
 # Runtime uploads
 /storage/
+
+# Frontend dependencies and build artifacts
+node_modules/
+apps/*/node_modules/
+*.tsbuildinfo
+apps/*/dist/
+apps/*/.vite/

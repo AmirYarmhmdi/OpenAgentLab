@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, String
+from sqlalchemy import Boolean, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -19,12 +19,22 @@ from openagentlab.database.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from openagentlab.database.models.conversation_session import ConversationSession
+    from openagentlab.database.models.document import Document
+    from openagentlab.database.models.file_metadata import FileMetadata
+    from openagentlab.database.models.workflow_execution import WorkflowExecution
 
 
 class User(TimestampMixin, Base):
     """Foundation user record for future authentication support."""
 
     __tablename__ = "users"
+    __table_args__ = (
+        UniqueConstraint(
+            "issuer",
+            "external_subject",
+            name="uq_users_issuer_external_subject",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -33,6 +43,8 @@ class User(TimestampMixin, Base):
     )
     email: Mapped[str | None] = mapped_column(String(320), index=True)
     display_name: Mapped[str | None] = mapped_column(String(255))
+    issuer: Mapped[str | None] = mapped_column(String(512), index=True)
+    external_subject: Mapped[str | None] = mapped_column(String(512), index=True)
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -41,5 +53,10 @@ class User(TimestampMixin, Base):
     )
 
     sessions: Mapped[list[ConversationSession]] = relationship(
+        back_populates="user",
+    )
+    documents: Mapped[list[Document]] = relationship(back_populates="user")
+    file_metadata: Mapped[list[FileMetadata]] = relationship(back_populates="user")
+    workflow_executions: Mapped[list[WorkflowExecution]] = relationship(
         back_populates="user",
     )

@@ -190,27 +190,28 @@ Technology
 
 # High-Level Request Flow
 
-1. User uploads files
+1. Authenticated user uploads files
 
 ↓
 
-2. FastAPI receives request
+2. FastAPI validates the configured auth boundary and resolves a local user
 
 ↓
 
-3. Metadata stored
+3. File stored through storage provider under an owner-aware key
 
 ↓
 
-4. Documents processed
+4. User-owned logical document and file metadata persisted in PostgreSQL
 
 ↓
 
-5. Embeddings generated
+5. Supported documents are processed synchronously by ingestion lifecycle
 
 ↓
 
-6. Stored in Qdrant
+6. Embeddings generated and stored in Qdrant with `user_id` and `document_id`
+   payload metadata
 
 ↓
 
@@ -222,7 +223,8 @@ Technology
 
 ↓
 
-9. Retriever gathers evidence
+9. Retriever gathers evidence filtered by authenticated user and selected
+   logical documents
 
 ↓
 

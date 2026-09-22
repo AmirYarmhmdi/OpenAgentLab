@@ -41,5 +41,8 @@ async def ask_question(
     return QuestionResponse(
         answer=answer.answer,
         workflow_id=answer.workflow_id,
+        status=answer.status,
+        message=answer.message,
         sources=answer.sources,
+        citations=answer.citations,
     )

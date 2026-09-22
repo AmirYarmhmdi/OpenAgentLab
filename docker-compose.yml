@@ -80,35 +80,43 @@ services:
       qdrant:
         condition: service_healthy
     environment:
-      APP_NAME: ${OPENAGENTLAB_APP_NAME:-OpenAgentLab}
-      APP_VERSION: ${OPENAGENTLAB_APP_VERSION:-0.1.0}
-      ENVIRONMENT: ${OPENAGENTLAB_ENVIRONMENT:-development}
-      DEBUG: ${OPENAGENTLAB_DEBUG:-false}
-      API_V1_PREFIX: ${OPENAGENTLAB_API_V1_PREFIX:-/api/v1}
-      LOG_LEVEL: ${OPENAGENTLAB_LOG_LEVEL:-INFO}
+      APP_NAME: ${APP_NAME:-OpenAgentLab}
+      APP_VERSION: ${APP_VERSION:-0.1.0}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-false}
+      API_V1_PREFIX: ${API_V1_PREFIX:-/api/v1}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
       HOST: 0.0.0.0
       PORT: 8000
-      DATABASE_URL: ${OPENAGENTLAB_DATABASE_URL:-postgresql+asyncpg://openagentlab:openagentlab_dev_password@postgres:5432/openagentlab}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-openagentlab}:${POSTGRES_PASSWORD:-openagentlab_dev_password}@postgres:5432/${POSTGRES_DB:-openagentlab}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      QDRANT_URL: ${OPENAGENTLAB_QDRANT_URL:-http://qdrant:6333}
+      QDRANT_URL: http://qdrant:6333
       QDRANT_API_KEY: ${QDRANT_API_KEY:-}
       QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION_NAME:-openagentlab_rag_chunks}
-      OPENAGENTLAB_PLANNER_MODEL: ${OPENAGENTLAB_PLANNER_MODEL:-gpt-4.1-mini}
+      OPENAI_PLANNER_MODEL: ${OPENAI_PLANNER_MODEL:-gpt-4o-mini}
+      OPENAI_RESPONSE_MODEL: ${OPENAI_RESPONSE_MODEL:-gpt-4o-mini}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       OPENAGENTLAB_TOOL_SELECTOR_MODEL: ${OPENAGENTLAB_TOOL_SELECTOR_MODEL:-gpt-4.1-mini}
-      OPENAGENTLAB_RESPONSE_MODEL: ${OPENAGENTLAB_RESPONSE_MODEL:-gpt-4.1-mini}
-      RAG_EMBEDDING_MODEL: ${RAG_EMBEDDING_MODEL:-text-embedding-3-small}
       RAG_EMBEDDING_DIMENSION: ${RAG_EMBEDDING_DIMENSION:-1536}
       RAG_CHUNK_SIZE: ${RAG_CHUNK_SIZE:-800}
       RAG_CHUNK_OVERLAP: ${RAG_CHUNK_OVERLAP:-100}
-      LANGFUSE_HOST: ${OPENAGENTLAB_LANGFUSE_HOST:-http://langfuse-web:3000}
+      RAG_RETRIEVAL_TOP_K: ${RAG_RETRIEVAL_TOP_K:-5}
+      RAG_CONTEXT_MAX_CHARS: ${RAG_CONTEXT_MAX_CHARS:-12000}
+      CONVERSATION_HISTORY_MAX_TURNS: ${CONVERSATION_HISTORY_MAX_TURNS:-6}
+      CONVERSATION_HISTORY_MAX_CHARS: ${CONVERSATION_HISTORY_MAX_CHARS:-4000}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-10485760}
+      LANGFUSE_HOST: http://langfuse-web:3000
       LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-false}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
-      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-}
-      STORAGE_BACKEND: ${OPENAGENTLAB_STORAGE_BACKEND:-local}
-      LOCAL_STORAGE_ROOT: ${OPENAGENTLAB_LOCAL_STORAGE_ROOT:-/app/storage}
+      LANGFUSE_BASE_URL: http://langfuse-web:3000
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      LOCAL_STORAGE_ROOT: /app/storage
+      AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME:-}
+      AZURE_STORAGE_CONTAINER_NAME: ${AZURE_STORAGE_CONTAINER_NAME:-}
+      AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID: ${AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID:-}
     ports:
-      - "${OPENAGENTLAB_HOST:-127.0.0.1}:${OPENAGENTLAB_PORT:-8000}:8000"
+      - "${COMPOSE_OPENAGENTLAB_BIND_HOST:-127.0.0.1}:${COMPOSE_OPENAGENTLAB_PORT:-8000}:8000"
     networks:
       - openagentlab-network
     volumes:
@@ -134,7 +142,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-openagentlab}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openagentlab_dev_password}
     ports:
-      - "${POSTGRES_HOST:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
+      - "${COMPOSE_POSTGRES_BIND_HOST:-127.0.0.1}:${COMPOSE_POSTGRES_PORT:-5432}:5432"
     volumes:
       - openagentlab_postgres_data:/var/lib/postgresql/data
     networks:
@@ -149,8 +157,8 @@ services:
     image: docker.io/qdrant/qdrant:v1.18.3
     restart: unless-stopped
     ports:
-      - "${QDRANT_HOST:-127.0.0.1}:6333:6333"
-      - "${QDRANT_HOST:-127.0.0.1}:6334:6334"
+      - "${COMPOSE_QDRANT_BIND_HOST:-127.0.0.1}:6333:6333"
+      - "${COMPOSE_QDRANT_BIND_HOST:-127.0.0.1}:6334:6334"
     volumes:
       - openagentlab_qdrant_data:/qdrant/storage
     networks:
@@ -204,7 +212,7 @@ services:
       LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME:-}
       LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-}
     ports:
-      - "${LANGFUSE_BIND_HOST:-127.0.0.1}:${LANGFUSE_HOST_PORT:-3000}:3000"
+      - "${COMPOSE_LANGFUSE_BIND_HOST:-127.0.0.1}:${COMPOSE_LANGFUSE_PORT:-3000}:3000"
     networks:
       - openagentlab-network
     healthcheck:
@@ -286,8 +294,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_dev_password}
     ports:
-      - "${MINIO_HOST:-127.0.0.1}:${MINIO_HOST_PORT:-9090}:9000"
-      - "${MINIO_CONSOLE_HOST:-127.0.0.1}:${MINIO_CONSOLE_HOST_PORT:-9091}:9001"
+      - "${COMPOSE_MINIO_BIND_HOST:-127.0.0.1}:${COMPOSE_MINIO_PORT:-9090}:9000"
+      - "${COMPOSE_MINIO_CONSOLE_BIND_HOST:-127.0.0.1}:${COMPOSE_MINIO_CONSOLE_PORT:-9091}:9001"
     volumes:
       - openagentlab_langfuse_minio_data:/data
     networks:

@@ -31,11 +31,15 @@ SENSITIVE_KEY_PARTS = (
     "api_key",
     "authorization",
     "credential",
+    "file_path",
+    "local_path",
     "password",
     "private_key",
     "secret",
+    "storage_key",
     "token",
 )
+SENSITIVE_EXACT_KEYS = ("path",)
 
 SECRET_PATTERNS = (
     re.compile(r"(?i)\b(bearer)\s+[a-z0-9._\-]+"),
@@ -190,6 +194,25 @@ def observed_generation(
 
 
 @contextmanager
+def observed_span(
+    *,
+    name: str,
+    input: Any = None,
+    metadata: Mapping[str, Any] | None = None,
+    settings: Settings | None = None,
+) -> Iterator[Any]:
+    """Create a child span observation when Langfuse is enabled."""
+    with _safe_current_observation(
+        settings=settings,
+        as_type="span",
+        name=name,
+        input=sanitize_for_observability(input),
+        metadata=sanitize_for_observability(metadata or {}),
+    ) as observation:
+        yield observation
+
+
+@contextmanager
 def observed_tool(
     *,
     name: str,
@@ -206,6 +229,40 @@ def observed_tool(
         metadata=sanitize_for_observability(metadata or {}),
     ) as observation:
         yield observation
+
+
+def safe_update_observation(observation: Any, **kwargs: Any) -> None:
+    """Update an observation with bounded, redacted payloads."""
+    _safe_update(
+        observation,
+        **{key: sanitize_for_observability(value) for key, value in kwargs.items()},
+    )
+
+
+def trace_id_from_observation(observation: Any) -> str | None:
+    """Best-effort extraction of the active trace ID from a Langfuse observation."""
+    for attr_name in ("trace_id", "traceId"):
+        value = getattr(observation, attr_name, None)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    for method_name in ("get_trace_id", "trace_id"):
+        method = getattr(observation, method_name, None)
+        if callable(method):
+            try:
+                value = method()
+            except Exception:
+                continue
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+
+    trace = getattr(observation, "trace", None)
+    if trace is not None:
+        trace_id = getattr(trace, "id", None)
+        if isinstance(trace_id, str) and trace_id.strip():
+            return trace_id.strip()
+
+    return None
 
 
 def sanitize_for_observability(value: Any, *, _depth: int = 0) -> Any:
@@ -439,7 +496,9 @@ def _object_to_mapping(value: Any) -> dict[str, Any]:
 
 def _is_sensitive_key(key: str) -> bool:
     normalized = key.lower()
-    return any(part in normalized for part in SENSITIVE_KEY_PARTS)
+    return normalized in SENSITIVE_EXACT_KEYS or any(
+        part in normalized for part in SENSITIVE_KEY_PARTS
+    )
 
 
 def _redact_and_truncate(value: str) -> str:

@@ -64,6 +64,7 @@ class FakeEmbeddingProvider:
 class FakeVectorStore:
     def __init__(self) -> None:
         self.upserts: list[tuple[list[Chunk], list[list[float]]]] = []
+        self.deleted_document_ids: list[str] = []
 
     def upsert(self, chunks: list[Chunk], embeddings: list[list[float]]) -> None:
         self.upserts.append((chunks, embeddings))
@@ -72,7 +73,7 @@ class FakeVectorStore:
         return []
 
     def delete(self, *args, **kwargs) -> None:
-        pass
+        self.deleted_document_ids.append(kwargs["document_id"])
 
 
 def test_document_indexer_orchestrates_load_chunk_embed_and_upsert(
@@ -100,3 +101,34 @@ def test_document_indexer_orchestrates_load_chunk_embed_and_upsert(
     assert summary.chunk_count == 1
     assert summary.document_ids == ("doc-1",)
     assert summary.chunk_ids == ("chunk-1",)
+
+
+def test_document_indexer_can_replace_chunks_for_logical_document_id(
+    tmp_path: Path,
+) -> None:
+    loader = FakeLoader()
+    chunker = FakeChunker()
+    embedder = FakeEmbeddingProvider()
+    vector_store = FakeVectorStore()
+    indexer = DocumentIndexer(
+        loader=loader,
+        chunker=chunker,
+        embedding_provider=embedder,
+        vector_store=vector_store,
+    )
+    logical_document_id = "11111111-1111-4111-8111-111111111111"
+
+    summary = indexer.index(
+        tmp_path / "notes.txt",
+        document_id=logical_document_id,
+        replace_existing=True,
+        metadata={"file_metadata_id": "file-1"},
+    )
+
+    chunks, _ = vector_store.upserts[0]
+    assert vector_store.deleted_document_ids == [logical_document_id]
+    assert chunks[0].document_id == logical_document_id
+    assert chunks[0].metadata["document_id"] == logical_document_id
+    assert chunks[0].metadata["loader_document_id"] == "doc-1"
+    assert chunks[0].metadata["file_metadata_id"] == "file-1"
+    assert summary.document_ids == (logical_document_id,)

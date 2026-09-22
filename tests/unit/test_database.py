@@ -32,6 +32,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 def test_all_initial_models_are_registered_with_metadata() -> None:
     assert models.User.__tablename__ == "users"
     assert sorted(Base.metadata.tables) == [
+        "conversation_message_documents",
+        "conversation_messages",
         "documents",
         "file_metadata",
         "sessions",
@@ -54,6 +56,11 @@ def test_constraints_and_indexes_match_initial_schema() -> None:
     sessions = Base.metadata.tables["sessions"]
     documents = Base.metadata.tables["documents"]
     file_metadata = Base.metadata.tables["file_metadata"]
+    users = Base.metadata.tables["users"]
+    conversation_messages = Base.metadata.tables["conversation_messages"]
+    conversation_message_documents = Base.metadata.tables[
+        "conversation_message_documents"
+    ]
     workflow_executions = Base.metadata.tables["workflow_executions"]
 
     assert {constraint.name for constraint in sessions.constraints} >= {
@@ -63,9 +70,15 @@ def test_constraints_and_indexes_match_initial_schema() -> None:
     }
     assert {index.name for index in documents.indexes} == {
         "ix_documents_session_id",
+        "ix_documents_user_id",
     }
+    assert documents.c.user_id.nullable is True
+    assert documents.c.status.server_default.arg == "uploaded"
+    assert documents.c.indexing_error_code.nullable is True
+    assert documents.c.indexing_error_message.nullable is True
     assert file_metadata.c.document_id.unique is True
     assert file_metadata.c.document_id.nullable is True
+    assert file_metadata.c.user_id.nullable is True
     assert file_metadata.c.normalized_extension.nullable is False
     assert file_metadata.c.status.nullable is False
     assert file_metadata.c.updated_at.nullable is False
@@ -77,6 +90,50 @@ def test_constraints_and_indexes_match_initial_schema() -> None:
     assert {index.name for index in workflow_executions.indexes} == {
         "ix_workflow_executions_session_id",
         "ix_workflow_executions_status",
+        "ix_workflow_executions_user_id",
+    }
+    assert workflow_executions.c.user_id.nullable is True
+    assert workflow_executions.c.trace_id.nullable is True
+    assert {constraint.name for constraint in users.constraints} >= {
+        "pk_users",
+        "uq_users_issuer_external_subject",
+    }
+    assert {index.name for index in users.indexes} >= {
+        "ix_users_email",
+        "ix_users_external_subject",
+        "ix_users_issuer",
+    }
+    assert {constraint.name for constraint in conversation_messages.constraints} >= {
+        "ck_conversation_messages_conversation_message_role",
+        "ck_conversation_messages_conversation_message_status",
+        "fk_conversation_messages_session_id_sessions",
+        "fk_conversation_messages_workflow_id_workflow_executions",
+        "pk_conversation_messages",
+        "uq_conversation_messages_session_sequence",
+    }
+    assert {index.name for index in conversation_messages.indexes} == {
+        "ix_conversation_messages_session_id",
+        "ix_conversation_messages_workflow_id",
+    }
+    assert conversation_messages.c.citations.server_default.arg == "[]"
+    assert conversation_messages.c.sources.server_default.arg == "[]"
+    assert conversation_messages.c.message_metadata.server_default.arg == "{}"
+    assert {
+        constraint.name for constraint in conversation_message_documents.constraints
+    } >= {
+        (
+            "ck_conversation_message_documents_"
+            "conversation_message_document_reference_type"
+        ),
+        "fk_conversation_message_documents_document_id_documents",
+        "fk_conversation_message_documents_file_metadata_id_file_metadata",
+        "fk_conversation_message_documents_message_id_conversation_messages",
+        "pk_conversation_message_documents",
+    }
+    assert {index.name for index in conversation_message_documents.indexes} == {
+        "ix_conversation_message_documents_document_id",
+        "ix_conversation_message_documents_file_metadata_id",
+        "ix_conversation_message_documents_message_id",
     }
 
 
@@ -111,8 +168,8 @@ def test_alembic_revision_history_has_one_head() -> None:
     config = Config(PROJECT_ROOT / "alembic.ini")
     script = ScriptDirectory.from_config(config)
 
-    assert script.get_heads() == ["20260807_0002"]
-    assert script.get_current_head() == "20260807_0002"
+    assert script.get_heads() == ["20260807_0006"]
+    assert script.get_current_head() == "20260807_0006"
 
 
 def test_alembic_handles_percent_encoded_database_url_without_connecting(

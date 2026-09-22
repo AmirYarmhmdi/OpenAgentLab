@@ -240,7 +240,9 @@ def _execute_task(
         metadata={"task_id": task.id},
     ) as observation:
         result = executor.execute(**validated_arguments)
-        observation.update(output=sanitize_for_observability(result))
+        observation.update(
+            output=sanitize_for_observability(_observed_tool_result(result))
+        )
         return result
 
 
@@ -342,3 +344,27 @@ def _copy_runtime_value(value: Any) -> Any:
         return deepcopy(value)
     except Exception:
         return value
+
+
+def _observed_tool_result(result: Any) -> dict[str, Any]:
+    if isinstance(result, BaseModel):
+        result = result.model_dump(mode="python")
+    if isinstance(result, Mapping):
+        keys = sorted(str(key) for key in result)
+        observed: dict[str, Any] = {
+            "type": "mapping",
+            "keys": keys[:20],
+            "key_count": len(keys),
+        }
+        for count_key in ("document_count", "chunk_count", "source_count"):
+            value = result.get(count_key)
+            if isinstance(value, int):
+                observed[count_key] = value
+        return observed
+    if isinstance(result, Sequence) and not isinstance(result, (str, bytes, bytearray)):
+        return {"type": "sequence", "item_count": len(result)}
+    if isinstance(result, str):
+        return {"type": "text", "chars": len(result)}
+    if isinstance(result, bytes | bytearray | memoryview):
+        return {"type": "binary", "bytes": len(result)}
+    return {"type": type(result).__name__}

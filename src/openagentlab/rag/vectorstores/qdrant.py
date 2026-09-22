@@ -13,6 +13,7 @@ import uuid
 from typing import Any
 
 from openagentlab.core.config import Settings, get_settings
+from openagentlab.observability import observed_span, safe_update_observation
 from openagentlab.rag.exceptions import VectorStoreError
 from openagentlab.rag.models import Chunk, RetrievedChunk
 from openagentlab.rag.vectorstores.base import MetadataFilter
@@ -23,6 +24,7 @@ DEFAULT_QDRANT_COLLECTION_NAME = "openagentlab_rag_chunks"
 
 PAYLOAD_CHUNK_ID = "chunk_id"
 PAYLOAD_DOCUMENT_ID = "document_id"
+PAYLOAD_USER_ID = "user_id"
 PAYLOAD_TEXT = "text"
 PAYLOAD_CHUNK_INDEX = "chunk_index"
 PAYLOAD_SOURCE = "source"
@@ -138,16 +140,28 @@ class QdrantVectorStore:
         if not points:
             return
 
-        try:
-            self._client.upsert(
-                **self._upsert_kwargs(points),
+        with observed_span(
+            name="qdrant.upsert",
+            input={
+                "collection_name": self.collection_name,
+                "point_count": len(points),
+                "document_ids": sorted({chunk.document_id for chunk in chunks}),
+            },
+        ) as observation:
+            try:
+                self._client.upsert(
+                    **self._upsert_kwargs(points),
+                )
+            except Exception as exc:
+                msg = (
+                    "Could not upsert chunks into Qdrant collection: "
+                    f"{self.collection_name}"
+                )
+                raise VectorStoreError(msg) from exc
+            safe_update_observation(
+                observation,
+                output={"status": "upserted", "point_count": len(points)},
             )
-        except Exception as exc:
-            msg = (
-                "Could not upsert chunks into Qdrant collection: "
-                f"{self.collection_name}"
-            )
-            raise VectorStoreError(msg) from exc
 
         logger.info(
             "Qdrant upsert completed",
@@ -167,17 +181,40 @@ class QdrantVectorStore:
             raise VectorStoreError(msg)
         self._validate_embedding(query_embedding)
 
+        if (
+            filters
+            and PAYLOAD_DOCUMENT_ID in filters
+            and PAYLOAD_USER_ID not in filters
+        ):
+            msg = "document-scoped search requires user_id."
+            raise VectorStoreError(msg)
+
         query_filter = self._build_filter(filters)
-        try:
-            points = self._search_points(
-                query_embedding=query_embedding,
-                top_k=top_k,
-                query_filter=query_filter,
-                score_threshold=score_threshold,
+        with observed_span(
+            name="qdrant.search",
+            input={
+                "collection_name": self.collection_name,
+                "top_k": top_k,
+                "has_filters": bool(filters),
+                "document_id": _filter_document_id(filters),
+                "score_threshold": score_threshold,
+            },
+            metadata={"document_id": _filter_document_id(filters)},
+        ) as observation:
+            try:
+                points = self._search_points(
+                    query_embedding=query_embedding,
+                    top_k=top_k,
+                    query_filter=query_filter,
+                    score_threshold=score_threshold,
+                )
+            except Exception as exc:
+                msg = f"Could not search Qdrant collection: {self.collection_name}"
+                raise VectorStoreError(msg) from exc
+            safe_update_observation(
+                observation,
+                output={"result_count": len(points)},
             )
-        except Exception as exc:
-            msg = f"Could not search Qdrant collection: {self.collection_name}"
-            raise VectorStoreError(msg) from exc
 
         results = [self._retrieved_chunk_from_point(point) for point in points]
         logger.info(
@@ -194,40 +231,56 @@ class QdrantVectorStore:
         *,
         chunk_ids: list[str] | None = None,
         document_id: str | None = None,
+        user_id: str | None = None,
     ) -> None:
         if not chunk_ids and document_id is None:
             msg = "delete requires chunk_ids, document_id, or both."
             raise VectorStoreError(msg)
+        if document_id is not None and user_id is None:
+            msg = "document-scoped delete requires user_id."
+            raise VectorStoreError(msg)
 
         models = self._qdrant_models()
-        try:
-            if chunk_ids:
-                self._client.delete(
-                    collection_name=self.collection_name,
-                    points_selector=models.PointIdsList(
-                        points=[self._point_id(chunk_id) for chunk_id in chunk_ids],
-                    ),
+        with observed_span(
+            name="qdrant.delete",
+            input={
+                "collection_name": self.collection_name,
+                "chunk_id_count": len(chunk_ids or ()),
+                "document_id": document_id,
+                "user_id": user_id,
+            },
+            metadata={"document_id": document_id, "user_id": user_id},
+        ) as observation:
+            try:
+                if chunk_ids:
+                    self._client.delete(
+                        collection_name=self.collection_name,
+                        points_selector=models.PointIdsList(
+                            points=[self._point_id(chunk_id) for chunk_id in chunk_ids],
+                        ),
+                    )
+                if document_id is not None:
+                    self._client.delete(
+                        collection_name=self.collection_name,
+                        points_selector=models.FilterSelector(
+                            filter=self._build_filter(
+                                {
+                                    PAYLOAD_DOCUMENT_ID: document_id,
+                                    PAYLOAD_USER_ID: user_id,
+                                }
+                            )
+                        ),
+                    )
+            except Exception as exc:
+                msg = (
+                    "Could not delete chunks from Qdrant collection: "
+                    f"{self.collection_name}"
                 )
-            if document_id is not None:
-                self._client.delete(
-                    collection_name=self.collection_name,
-                    points_selector=models.FilterSelector(
-                        filter=models.Filter(
-                            must=[
-                                models.FieldCondition(
-                                    key=PAYLOAD_DOCUMENT_ID,
-                                    match=models.MatchValue(value=document_id),
-                                )
-                            ]
-                        )
-                    ),
-                )
-        except Exception as exc:
-            msg = (
-                "Could not delete chunks from Qdrant collection: "
-                f"{self.collection_name}"
+                raise VectorStoreError(msg) from exc
+            safe_update_observation(
+                observation,
+                output={"status": "deleted"},
             )
-            raise VectorStoreError(msg) from exc
 
     def delete_collection(self) -> None:
         """Delete the configured Qdrant collection if it exists."""
@@ -306,7 +359,9 @@ class QdrantVectorStore:
         conditions = []
         for key, value in filters.items():
             payload_key = (
-                key if key == PAYLOAD_DOCUMENT_ID else f"{PAYLOAD_METADATA}.{key}"
+                key
+                if key in {PAYLOAD_DOCUMENT_ID, PAYLOAD_USER_ID}
+                else f"{PAYLOAD_METADATA}.{key}"
             )
             conditions.append(
                 models.FieldCondition(
@@ -347,6 +402,7 @@ class QdrantVectorStore:
         return {
             PAYLOAD_CHUNK_ID: chunk.id,
             PAYLOAD_DOCUMENT_ID: chunk.document_id,
+            PAYLOAD_USER_ID: metadata.get(PAYLOAD_USER_ID),
             PAYLOAD_TEXT: chunk.text,
             PAYLOAD_CHUNK_INDEX: chunk.chunk_index,
             PAYLOAD_SOURCE: metadata.get("source"),
@@ -390,3 +446,10 @@ class QdrantVectorStore:
         if self._wait is not None:
             kwargs["wait"] = self._wait
         return kwargs
+
+
+def _filter_document_id(filters: MetadataFilter | None) -> str | None:
+    if not filters:
+        return None
+    value = filters.get(PAYLOAD_DOCUMENT_ID)
+    return str(value) if value is not None else None

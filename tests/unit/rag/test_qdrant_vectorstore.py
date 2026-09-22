@@ -71,6 +71,7 @@ class FakeQdrantClient:
                     "text": "retrieved text",
                     "chunk_index": 2,
                     "metadata": {
+                        "user_id": "user-1",
                         "filename": "report.pdf",
                         "page_number": 4,
                         "token_count": 2,
@@ -155,8 +156,11 @@ def sample_chunk() -> Chunk:
         chunk_index=0,
         metadata={
             "source": "/tmp/report.pdf",
+            "user_id": "user-1",
             "filename": "report.pdf",
             "page_number": 1,
+            "source_location": "page:1",
+            "location_type": "page",
         },
         token_count=2,
     )
@@ -190,8 +194,11 @@ def test_qdrant_store_upsert_builds_payload() -> None:
     assert point.vector == [0.1, 0.2]
     assert point.payload["chunk_id"] == "chunk-1"
     assert point.payload["document_id"] == "doc-1"
+    assert point.payload["user_id"] == "user-1"
     assert point.payload["text"] == "hello world"
     assert point.payload["metadata"]["page_number"] == 1
+    assert point.payload["metadata"]["source_location"] == "page:1"
+    assert point.payload["metadata"]["location_type"] == "page"
     assert client.upserts[0]["wait"] is None
 
 
@@ -218,7 +225,11 @@ def test_qdrant_store_search_maps_results_and_filters() -> None:
     results = store.search(
         [0.1, 0.2],
         top_k=3,
-        filters={"project_id": "project-1", "document_id": "doc-1"},
+        filters={
+            "project_id": "project-1",
+            "document_id": "doc-1",
+            "user_id": "user-1",
+        },
         score_threshold=0.5,
     )
 
@@ -229,18 +240,28 @@ def test_qdrant_store_search_maps_results_and_filters() -> None:
     assert search_call["limit"] == 3
     assert search_call["score_threshold"] == 0.5
     filter_keys = [condition.key for condition in search_call["query_filter"].must]
-    assert filter_keys == ["metadata.project_id", "document_id"]
+    assert filter_keys == ["metadata.project_id", "document_id", "user_id"]
+
+
+def test_qdrant_store_rejects_document_search_without_user_filter() -> None:
+    store = qdrant_store()
+
+    with pytest.raises(VectorStoreError, match="requires user_id"):
+        store.search([0.1, 0.2], top_k=3, filters={"document_id": "doc-1"})
 
 
 def test_qdrant_store_delete_by_chunk_ids_and_document_id() -> None:
     client = FakeQdrantClient()
     store = qdrant_store(client)
 
-    store.delete(chunk_ids=["chunk-1"], document_id="doc-1")
+    store.delete(chunk_ids=["chunk-1"], document_id="doc-1", user_id="user-1")
 
     assert len(client.deletes) == 2
     assert client.deletes[0]["points_selector"].points
-    assert client.deletes[1]["points_selector"].filter.must[0].key == "document_id"
+    filter_keys = [
+        condition.key for condition in client.deletes[1]["points_selector"].filter.must
+    ]
+    assert filter_keys == ["document_id", "user_id"]
 
 
 def test_qdrant_store_deletes_collection_when_it_exists() -> None:

@@ -8,6 +8,7 @@
   openagentlab.rag.vectorstores.base.
 """
 
+from openagentlab.observability import observed_span, safe_update_observation
 from openagentlab.rag.embeddings.base import EmbeddingProvider
 from openagentlab.rag.exceptions import RetrieverError
 from openagentlab.rag.models import RetrievedChunk
@@ -41,10 +42,32 @@ class Retriever:
             msg = "top_k must be greater than zero."
             raise RetrieverError(msg)
 
-        query_embedding = self._embedding_provider.embed_query(query)
-        return self._vector_store.search(
-            query_embedding,
-            top_k=top_k,
-            filters=filters,
-            score_threshold=score_threshold,
-        )
+        with observed_span(
+            name="rag.retrieve",
+            input={
+                "top_k": top_k,
+                "has_filters": bool(filters),
+                "document_id": _filter_document_id(filters),
+                "score_threshold": score_threshold,
+            },
+            metadata={"document_id": _filter_document_id(filters)},
+        ) as observation:
+            query_embedding = self._embedding_provider.embed_query(query)
+            results = self._vector_store.search(
+                query_embedding,
+                top_k=top_k,
+                filters=filters,
+                score_threshold=score_threshold,
+            )
+            safe_update_observation(
+                observation,
+                output={"retrieved_chunk_count": len(results)},
+            )
+            return results
+
+
+def _filter_document_id(filters: MetadataFilter | None) -> str | None:
+    if not filters:
+        return None
+    value = filters.get("document_id")
+    return str(value) if value is not None else None

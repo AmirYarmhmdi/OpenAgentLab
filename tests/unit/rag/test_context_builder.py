@@ -45,6 +45,34 @@ def test_context_builder_formats_sources_and_pages_in_order() -> None:
     assert context.sources[0]["page_number"] == 12
 
 
+def test_context_builder_preserves_source_location_metadata() -> None:
+    chunk = Chunk(
+        id="chunk-csv",
+        document_id="doc-1",
+        text="Row 2: name=Alice | age=32",
+        chunk_index=0,
+        metadata={
+            "filename": "people.csv",
+            "file_type": "csv",
+            "source": "storage-key",
+            "location_type": "row_range",
+            "source_location": "rows:2-2",
+            "row_start": 2,
+            "row_end": 2,
+            "columns": ["name", "age"],
+        },
+        token_count=4,
+    )
+
+    context = ContextBuilder().build([RetrievedChunk(chunk=chunk, score=0.8)])
+
+    assert "Location: rows:2-2" in context.text
+    assert context.sources[0]["location_type"] == "row_range"
+    assert context.sources[0]["row_start"] == 2
+    assert context.sources[0]["row_end"] == 2
+    assert context.sources[0]["columns"] == ["name", "age"]
+
+
 def test_context_builder_returns_empty_context_for_empty_results() -> None:
     context = ContextBuilder().build([])
 

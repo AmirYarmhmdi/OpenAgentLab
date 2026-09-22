@@ -54,6 +54,15 @@ async def upload_document(
         content_type=document.content_type,
         status=document.status,
         workflow_id=document.workflow_id,
+        file_metadata_id=document.file_metadata_id,
+        normalized_extension=document.normalized_extension,
+        size_bytes=document.size_bytes,
+        checksum_sha256=document.checksum_sha256,
+        file_storage_status=document.file_storage_status,
+        indexing_error_code=document.indexing_error_code,
+        indexing_error_message=document.indexing_error_message,
+        created_at=document.created_at,
+        updated_at=document.updated_at,
     )
 
 
@@ -74,6 +83,14 @@ async def list_documents(
                 content_type=document.content_type,
                 status=document.status,
                 created_at=document.created_at,
+                file_metadata_id=document.file_metadata_id,
+                normalized_extension=document.normalized_extension,
+                size_bytes=document.size_bytes,
+                checksum_sha256=document.checksum_sha256,
+                file_storage_status=document.file_storage_status,
+                indexing_error_code=document.indexing_error_code,
+                indexing_error_message=document.indexing_error_message,
+                updated_at=document.updated_at,
             )
             for document in documents
         ]

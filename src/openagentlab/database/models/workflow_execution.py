@@ -22,7 +22,9 @@ from openagentlab.database.base import Base, TimestampMixin
 from openagentlab.database.enums import WorkflowExecutionStatus
 
 if TYPE_CHECKING:
+    from openagentlab.database.models.conversation_message import ConversationMessage
     from openagentlab.database.models.conversation_session import ConversationSession
+    from openagentlab.database.models.user import User
 
 
 class WorkflowExecution(TimestampMixin, Base):
@@ -47,6 +49,11 @@ class WorkflowExecution(TimestampMixin, Base):
         index=True,
         nullable=False,
     )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        index=True,
+    )
     workflow_name: Mapped[str] = mapped_column(String(255), nullable=False)
     workflow_version: Mapped[str | None] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(
@@ -65,4 +72,8 @@ class WorkflowExecution(TimestampMixin, Base):
 
     session: Mapped[ConversationSession] = relationship(
         back_populates="workflow_executions",
+    )
+    user: Mapped[User | None] = relationship(back_populates="workflow_executions")
+    messages: Mapped[list[ConversationMessage]] = relationship(
+        back_populates="workflow"
     )

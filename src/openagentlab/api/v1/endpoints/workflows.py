@@ -11,13 +11,29 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from openagentlab.api.dependencies import get_workflow_status_service
-from openagentlab.schemas.workflows import WorkflowStatusResponse
+from openagentlab.schemas.workflows import WorkflowListResponse, WorkflowStatusResponse
 from openagentlab.services.workflows import WorkflowStatusService
 
 router = APIRouter(prefix="/workflows")
+
+
+@router.get(
+    "",
+    response_model=WorkflowListResponse,
+    summary="List recent workflow runs",
+)
+async def list_recent_workflows(
+    workflow_service: Annotated[
+        WorkflowStatusService,
+        Depends(get_workflow_status_service),
+    ],
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+) -> WorkflowListResponse:
+    workflows = await workflow_service.list_recent_workflows(limit=limit)
+    return WorkflowListResponse(workflows=workflows)
 
 
 @router.get(
@@ -35,6 +51,7 @@ async def get_workflow_status(
     workflow = await workflow_service.get_workflow_status(workflow_id)
     return WorkflowStatusResponse(
         workflow_id=workflow.workflow_id,
+        session_id=workflow.session_id,
         status=workflow.status,
         result=workflow.result,
         error=workflow.error,

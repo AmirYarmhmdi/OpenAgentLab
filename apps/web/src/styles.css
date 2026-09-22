@@ -1,0 +1,382 @@
+:root {
+  color: #18202f;
+  background: #f6f7f9;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.appShell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-right: 1px solid #d8dde7;
+  background: #ffffff;
+  padding: 20px;
+}
+
+.sidebarHeader h1,
+.sidebarHeader p,
+.runDetails h2,
+.emptyState h2 {
+  margin: 0;
+}
+
+.sidebarHeader h1 {
+  color: #18202f;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sidebarHeader p {
+  margin-top: 4px;
+  color: #596273;
+  font-size: 14px;
+}
+
+.runList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.runItem,
+.secondaryButton,
+.primaryButton,
+.fileButton {
+  border: 1px solid #c9d1df;
+  border-radius: 8px;
+}
+
+.runItem {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px;
+  background: #ffffff;
+  color: inherit;
+  text-align: left;
+}
+
+.runItem:hover,
+.runItem.selected {
+  border-color: #2f6f73;
+  background: #eef7f6;
+}
+
+.runItem span {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runItem small,
+.identifier,
+.muted,
+.attachmentList small {
+  color: #626c7c;
+}
+
+.workspace {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.runPanel {
+  min-height: 0;
+  overflow: auto;
+  padding: 28px;
+}
+
+.runDetails {
+  display: grid;
+  gap: 24px;
+  max-width: 920px;
+}
+
+.runDetails header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.runDetails h2 {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.answerText {
+  margin: 0;
+  max-width: 78ch;
+  color: #273142;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #e9edf3;
+  color: #354052;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-pending,
+.status-running {
+  background: #fff2cf;
+  color: #765600;
+}
+
+.status-completed {
+  background: #ddf3e5;
+  color: #176234;
+}
+
+.status-failed {
+  background: #fde4e1;
+  color: #9a2a21;
+}
+
+.attachmentList,
+.artifactList,
+.workflowDetails ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attachmentList {
+  display: grid;
+  gap: 8px;
+}
+
+.attachmentList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #d8dde7;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.attachmentList span {
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+
+.limitation {
+  margin: 10px 0 0;
+  color: #626c7c;
+  font-size: 13px;
+}
+
+.workflowDetails {
+  border-top: 1px solid #d8dde7;
+  padding-top: 16px;
+}
+
+.workflowDetails summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.workflowDetails ol {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.workflowDetails li {
+  display: grid;
+  gap: 4px;
+  border-left: 3px solid #2f6f73;
+  padding-left: 12px;
+}
+
+.workflowDetails li span {
+  color: #596273;
+  font-size: 13px;
+}
+
+.workflowDetails p {
+  margin: 0;
+  color: #354052;
+}
+
+.composer {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #d8dde7;
+  background: #ffffff;
+  padding: 16px 28px 20px;
+}
+
+.composer label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.composer textarea {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  border: 1px solid #c9d1df;
+  border-radius: 8px;
+  padding: 12px;
+  color: #18202f;
+}
+
+.composer textarea:focus,
+.runItem:focus-visible,
+.secondaryButton:focus-visible,
+.primaryButton:focus-visible,
+.fileButton:focus-within {
+  outline: 3px solid #9ed8db;
+  outline-offset: 2px;
+}
+
+.composerFooter {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.primaryButton,
+.secondaryButton,
+.fileButton {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-weight: 700;
+}
+
+.primaryButton {
+  border-color: #2f6f73;
+  background: #2f6f73;
+  color: #ffffff;
+}
+
+.secondaryButton,
+.fileButton {
+  background: #ffffff;
+  color: #273142;
+}
+
+.fileButton {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+.fileButton input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pendingFiles {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pendingFiles span {
+  border-radius: 999px;
+  background: #e9edf3;
+  padding: 4px 8px;
+  color: #354052;
+  font-size: 12px;
+}
+
+.errorBanner {
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid #f0b4ad;
+  border-radius: 8px;
+  background: #fff0ee;
+  padding: 10px 12px;
+  color: #8b2018;
+}
+
+.emptyState {
+  display: grid;
+  place-content: center;
+  min-height: 100%;
+  max-width: 520px;
+  color: #596273;
+}
+
+.emptyState h2 {
+  color: #18202f;
+}
+
+@media (max-width: 760px) {
+  .appShell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #d8dde7;
+  }
+
+  .runList {
+    max-height: 220px;
+  }
+
+  .composerFooter {
+    grid-template-columns: 1fr;
+  }
+
+  .runPanel,
+  .composer {
+    padding-inline: 16px;
+  }
+}

@@ -28,6 +28,7 @@ dependencies = [
     "python-multipart",
     "python-docx",
     "openai",
+    "PyJWT[crypto]>=2.10.0",
     "qdrant-client",
     "sqlalchemy[asyncio]>=2.0.51",
     "uvicorn",
@@ -87,4 +88,5 @@ pythonpath = ["src"]
 addopts = "-ra"
 markers = [
     "evaluation: LLM-backed evaluation tests that require evaluator dependencies and credentials",
+    "e2e: isolated end-to-end tests requiring disposable PostgreSQL and Qdrant services",
 ]

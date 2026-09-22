@@ -102,5 +102,5 @@ def test_get_storage_provider_rejects_unsupported_backend() -> None:
         LOCAL_STORAGE_ROOT="storage",
     )
 
-    with pytest.raises(RuntimeError, match="Unsupported storage backend: s3"):
+    with pytest.raises(RuntimeError, match="STORAGE_BACKEND must be one of"):
         dependencies.get_storage_provider(settings)

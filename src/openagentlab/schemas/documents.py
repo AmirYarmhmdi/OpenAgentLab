@@ -22,6 +22,15 @@ class DocumentUploadResponse(BaseModel):
     content_type: str | None = None
     status: str
     workflow_id: UUID | None = None
+    file_metadata_id: UUID | None = None
+    normalized_extension: str | None = None
+    size_bytes: int | None = None
+    checksum_sha256: str | None = None
+    file_storage_status: str | None = None
+    indexing_error_code: str | None = None
+    indexing_error_message: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class DocumentListItem(BaseModel):
@@ -34,6 +43,14 @@ class DocumentListItem(BaseModel):
     content_type: str | None = None
     status: str
     created_at: datetime
+    file_metadata_id: UUID | None = None
+    normalized_extension: str | None = None
+    size_bytes: int | None = None
+    checksum_sha256: str | None = None
+    file_storage_status: str | None = None
+    indexing_error_code: str | None = None
+    indexing_error_message: str | None = None
+    updated_at: datetime | None = None
 
 
 class DocumentListResponse(BaseModel):

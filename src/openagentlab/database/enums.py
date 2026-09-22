@@ -1,8 +1,8 @@
 """File guide.
 
 - Use: Defines database status values shared by SQLAlchemy models.
-- Usage: Import ConversationSessionStatus, DocumentStatus, FileStorageStatus, and 1
-  more from openagentlab.database.enums.
+- Usage: Import ConversationSessionStatus, DocumentStatus, FileStorageStatus, and
+  WorkflowExecutionStatus from openagentlab.database.enums.
 - Duties: Defines ConversationSessionStatus, DocumentStatus, FileStorageStatus, and
   WorkflowExecutionStatus and related helper logic.
 - Depends on: External packages only: enum.
@@ -16,10 +16,21 @@ class ConversationSessionStatus(StrEnum):
     ARCHIVED = "archived"
 
 
+class ConversationMessageRole(StrEnum):
+    USER = "user"
+    ASSISTANT = "assistant"
+
+
+class ConversationMessageStatus(StrEnum):
+    SUBMITTED = "submitted"
+    ANSWERED = "answered"
+    FAILED = "failed"
+
+
 class DocumentStatus(StrEnum):
-    PENDING = "pending"
+    UPLOADED = "uploaded"
     PROCESSING = "processing"
-    READY = "ready"
+    INDEXED = "indexed"
     FAILED = "failed"
 
 

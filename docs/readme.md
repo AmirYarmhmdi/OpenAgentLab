@@ -21,6 +21,15 @@ docs/
     Engineering principles and development practices
 ```
 
+## Parts, Duties, Inputs, And Outcomes
+
+| Part | Duty | Input | Outcome |
+| --- | --- | --- | --- |
+| `architecture/` | Defines product intent, requirements, system design, API contracts, workflow architecture, and database design. | Product goals, user stories, technical constraints, and implementation discoveries. | Source-of-truth design documents that guide backend, frontend, persistence, RAG, and agent work. |
+| `ADR/` | Records important architectural decisions and their tradeoffs. | A decision point, available alternatives, and project context. | Decision history that explains why the system uses specific technologies or patterns. |
+| `engineering/` | Documents development principles and quality practices. | Team conventions and desired engineering standards. | Guidance for design-first, observability-first, and evaluation-first implementation. |
+| `images/` | Stores documentation images and branding assets. | Image files referenced by Markdown documents. | Rendered visuals in project documentation and README pages. |
+
 ## Documentation Philosophy
 
 The documentation is organized into three complementary sections:

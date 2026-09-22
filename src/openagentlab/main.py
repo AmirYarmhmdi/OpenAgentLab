@@ -13,10 +13,17 @@ from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from openagentlab.api.dependencies import close_storage_providers
 from openagentlab.api.router import router as api_router
-from openagentlab.core.config import Settings, get_settings
+from openagentlab.core.config import (
+    Settings,
+    cors_allowed_origins,
+    get_settings,
+    safe_configuration_summary,
+    validate_startup_configuration,
+)
 from openagentlab.core.exceptions import register_exception_handlers
 from openagentlab.core.logging import configure_logging
 from openagentlab.database.engine import dispose_engine
@@ -54,6 +61,7 @@ def create_lifespan(
 def create_app() -> FastAPI:
     # Load settings once and use them to configure the app.
     settings = get_settings()
+    validate_startup_configuration(settings)
     configure_logging(settings.LOG_LEVEL)
 
     # Create the FastAPI app with project name, version, debug mode, and lifespan.
@@ -63,6 +71,16 @@ def create_app() -> FastAPI:
         debug=settings.DEBUG,
         lifespan=create_lifespan(settings),
     )
+
+    origins = cors_allowed_origins(settings)
+    if origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     # Store settings on the app and connect routers and exception handlers.
     app.state.settings = settings
@@ -74,7 +92,7 @@ def create_app() -> FastAPI:
     def root() -> dict[str, str]:
         return {
             "service": settings.APP_NAME,
-            "status": "running",
+            "version": settings.APP_VERSION,
         }
 
     logger.info(
@@ -83,6 +101,7 @@ def create_app() -> FastAPI:
         settings.APP_VERSION,
         settings.ENVIRONMENT,
     )
+    logger.info("Configuration summary: %s", safe_configuration_summary(settings))
 
     return app
 
