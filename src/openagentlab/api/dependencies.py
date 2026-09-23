@@ -164,36 +164,6 @@ _azure_blob_storage_providers: set[AzureBlobStorageProvider] = set()
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_file_metadata_repository(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
-) -> FileMetadataRepository:
-    return SQLAlchemyFileMetadataRepository(session)
-
-
-def get_document_repository(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
-) -> DocumentRepository:
-    return SQLAlchemyDocumentRepository(session)
-
-
-def get_conversation_repository(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
-) -> ConversationRepository:
-    return SQLAlchemyConversationRepository(session)
-
-
-def get_workflow_execution_repository(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
-) -> WorkflowExecutionRepository:
-    return SQLAlchemyWorkflowExecutionRepository(session)
-
-
-def get_user_repository(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
-) -> UserRepository:
-    return SQLAlchemyUserRepository(session)
-
-
 def get_external_identity(
     settings: Annotated[Settings, Depends(get_settings)],
     credentials: Annotated[
@@ -205,6 +175,41 @@ def get_external_identity(
         token=credentials.credentials if credentials is not None else None,
         settings=settings,
     )
+
+
+def get_file_metadata_repository(
+    _identity: Annotated[ExternalIdentity, Depends(get_external_identity)],
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+) -> FileMetadataRepository:
+    return SQLAlchemyFileMetadataRepository(session)
+
+
+def get_document_repository(
+    _identity: Annotated[ExternalIdentity, Depends(get_external_identity)],
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+) -> DocumentRepository:
+    return SQLAlchemyDocumentRepository(session)
+
+
+def get_conversation_repository(
+    _identity: Annotated[ExternalIdentity, Depends(get_external_identity)],
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+) -> ConversationRepository:
+    return SQLAlchemyConversationRepository(session)
+
+
+def get_workflow_execution_repository(
+    _identity: Annotated[ExternalIdentity, Depends(get_external_identity)],
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+) -> WorkflowExecutionRepository:
+    return SQLAlchemyWorkflowExecutionRepository(session)
+
+
+def get_user_repository(
+    _identity: Annotated[ExternalIdentity, Depends(get_external_identity)],
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+) -> UserRepository:
+    return SQLAlchemyUserRepository(session)
 
 
 async def get_current_principal(
