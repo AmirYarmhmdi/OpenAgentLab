@@ -39,6 +39,18 @@ lines are ignored, duplicate IDs fail validation, string values are stripped, an
 list-like fields must contain non-empty strings. Use `tags` to select a subset
 of cases for local or CI runs.
 
+Static smoke/regression records may include checked-in `actual_output` and
+`retrieved_contexts`. Those fields are hand-written observations used to test
+evaluation infrastructure. They are not produced by the current runtime.
+
+Live runtime datasets keep runtime setup under `metadata.live.documents`. The
+live runner uploads those synthetic fixture documents, indexes them, asks the
+runtime question, and builds a new in-memory `EvaluationCase` with generated
+`actual_output` and `retrieved_contexts`. The source JSONL is not modified.
+Cases may opt in to safe report text with `metadata.live.safe_report_text=true`.
+That flag is intended only for synthetic fixtures that contain no private,
+credential, or user-supplied content.
+
 ## Local Commands
 
 Validate the dataset without external API calls:
@@ -72,8 +84,57 @@ Run DeepEval regression tests:
 uv run --group evaluation pytest -m evaluation tests/evaluation
 ```
 
-The command-line entry point currently exposes `validate` and `ragas`. DeepEval
-coverage runs through the pytest marker above.
+Run the opt-in live runtime DeepEval path:
+
+```bash
+RUN_LIVE_EVALUATION=1 \
+DATABASE_URL=postgresql+asyncpg://openagentlab:openagentlab_password@localhost:5432/openagentlab \
+QDRANT_URL=http://localhost:6333 \
+QDRANT_COLLECTION_NAME=openagentlab_live_eval \
+OPENAI_API_KEY=... \
+uv run --group evaluation python -m openagentlab.evaluation live-deepeval \
+  --dataset evaluation/datasets/live_smoke.jsonl \
+  --tags live smoke \
+  --max-cases 1 \
+  --include-report-text \
+  --context-preview-chars 500 \
+  --report-path evaluation-results/live-deepeval-report.json
+```
+
+The live command requires:
+
+- `RUN_LIVE_EVALUATION=1`
+- evaluation dependencies installed with `uv sync --group evaluation`
+- a reachable PostgreSQL database with OpenAgentLab migrations already applied
+- a reachable Qdrant instance
+- `OPENAI_API_KEY`
+- a dedicated small `QDRANT_COLLECTION_NAME` for evaluation runs
+
+The live path uses the configured runtime models:
+
+- embeddings: `OPENAI_EMBEDDING_MODEL`
+- answer generation: `OPENAI_RESPONSE_MODEL`
+- evaluator model: `EVALUATION_MODEL`
+
+The default live command runs only one tagged smoke case. Increase
+`--max-cases` explicitly when you are ready to spend more. Reports include
+scores, thresholds, pass/fail status, latency, model name, token usage when the
+provider returns it, workflow/trace IDs when available, and safe context counts.
+They do not include API keys, credentials, arbitrary uploaded user documents, or
+full retrieved document text.
+
+By default, report text is omitted. Add `--include-report-text` only for
+synthetic cases marked with `metadata.live.safe_report_text=true`; the report
+will then include `input`, `expected_output`, `actual_output`, and bounded
+retrieved-context previews. `--context-preview-chars` controls the maximum
+characters per retrieved context preview. Reports containing this text are marked
+with `contains_safe_test_text=true` and per-case `report_text_policy` values.
+
+`trace_id` is `null` when Langfuse tracing is disabled, unavailable, or not
+configured with credentials. Live evaluation does not require Langfuse and does
+not fail when tracing is unavailable. When Langfuse is enabled and returns a
+trace ID, the existing question-answering workflow persistence path stores it on
+the workflow record and the live report surfaces it.
 
 ## Thresholds
 

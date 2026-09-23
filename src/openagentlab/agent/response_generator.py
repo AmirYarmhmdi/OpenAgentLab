@@ -11,6 +11,7 @@
 """
 
 import json
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
@@ -31,6 +32,9 @@ RESPONSE_GENERATOR_INSTRUCTIONS = (
     "workflow context and execution results.\n\n"
     "When a deterministic tool result is provided, treat that result as "
     "authoritative.\n\n"
+    "Answer the user's exact request directly and concisely. Use only evidence "
+    "that is relevant to that request, and ignore unrelated details that may be "
+    "present in retrieved context or tool output.\n\n"
     "Do not recompute, override, reinterpret as a different result, or fabricate "
     "replacement values.\n"
     "Do not claim that an operation was performed unless the supplied context says "
@@ -57,6 +61,14 @@ class ResponseGenerator(Protocol):
         error: str | None = None,
     ) -> str:
         """Return the final user-facing response for a workflow outcome."""
+
+
+@dataclass(frozen=True)
+class ResponseGenerationMetadata:
+    """Provider metadata from the most recent response generation call."""
+
+    model: str
+    token_usage: dict[str, int] | None = None
 
 
 class OpenAIResponseGeneratorConfig(BaseModel):
@@ -99,6 +111,11 @@ class OpenAIResponseGenerator:
         )
         self._client = client
         self._settings = resolved_settings
+        self._last_generation_metadata: ResponseGenerationMetadata | None = None
+
+    @property
+    def last_generation_metadata(self) -> ResponseGenerationMetadata | None:
+        return self._last_generation_metadata
 
     def generate_response(
         self,
@@ -115,6 +132,7 @@ class OpenAIResponseGenerator:
             msg = "Response generator user query must not be empty."
             raise ResponseGenerationError(msg)
 
+        self._last_generation_metadata = None
         response_input = _build_response_input(
             user_query=user_query,
             plan=plan,
@@ -145,6 +163,7 @@ class OpenAIResponseGenerator:
                     instructions=RESPONSE_GENERATOR_INSTRUCTIONS,
                     input=response_input,
                 )
+                usage_details = usage_details_from_response(response)
                 observation.update(
                     output=sanitize_for_observability(
                         {
@@ -153,7 +172,11 @@ class OpenAIResponseGenerator:
                             )
                         }
                     ),
-                    usage_details=usage_details_from_response(response),
+                    usage_details=usage_details,
+                )
+                self._last_generation_metadata = ResponseGenerationMetadata(
+                    model=self._config.model,
+                    token_usage=usage_details,
                 )
         except ResponseGenerationError:
             raise

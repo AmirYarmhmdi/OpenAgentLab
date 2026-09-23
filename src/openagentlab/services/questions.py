@@ -106,6 +106,9 @@ class QuestionAnswer:
     status: str = QUESTION_STATUS_ANSWERED
     message: str | None = None
     citations: tuple[dict[str, Any], ...] = ()
+    retrieved_contexts: tuple[str, ...] = ()
+    model_name: str | None = None
+    token_usage: dict[str, int] | None = None
 
 
 class QuestionAnsweringService(Protocol):
@@ -269,6 +272,7 @@ class RAGQuestionAnsweringService:
                     "status": QUESTION_STATUS_ANSWERED,
                 },
             )
+            generation_metadata = _generation_metadata(self._response_generator)
         except AppException as exc:
             await self._mark_workflow_failed(_workflow_id(workflow), exc.message)
             raise
@@ -314,6 +318,9 @@ class RAGQuestionAnsweringService:
             workflow_details=tuple(workflow_details),
             status=QUESTION_STATUS_ANSWERED,
             citations=citations,
+            retrieved_contexts=(context.text,) if context.text else (),
+            model_name=generation_metadata.get("model_name"),
+            token_usage=generation_metadata.get("token_usage"),
         )
 
     def _retrieve_context(
@@ -553,6 +560,7 @@ class RAGQuestionAnsweringService:
             status=status,
             message=message,
             citations=citations,
+            retrieved_contexts=(),
         )
 
     async def _start_workflow(
@@ -625,6 +633,17 @@ class RAGQuestionAnsweringService:
 
 def _workflow_id(workflow: WorkflowExecutionRecord | None) -> UUID | None:
     return workflow.id if workflow is not None else None
+
+
+def _generation_metadata(response_generator: ResponseGenerator) -> dict[str, Any]:
+    metadata = getattr(response_generator, "last_generation_metadata", None)
+    if metadata is None:
+        return {"model_name": None, "token_usage": None}
+
+    return {
+        "model_name": getattr(metadata, "model", None),
+        "token_usage": getattr(metadata, "token_usage", None),
+    }
 
 
 def _observed_question_input(question_input: QuestionInput) -> dict[str, Any]:

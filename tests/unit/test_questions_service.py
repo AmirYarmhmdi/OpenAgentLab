@@ -8,6 +8,7 @@
 
 import asyncio
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
@@ -47,10 +48,15 @@ class FakeResponseGenerator:
     def __init__(self) -> None:
         self.tool_result = None
         self.call_count = 0
+        self.last_generation_metadata = None
 
     def generate_response(self, **kwargs) -> str:
         self.call_count += 1
         self.tool_result = kwargs["tool_result"]
+        self.last_generation_metadata = SimpleNamespace(
+            model="fake-response-model",
+            token_usage={"input_tokens": 9, "output_tokens": 5},
+        )
         return "Amir has Python and FastAPI experience."
 
 
@@ -284,6 +290,9 @@ async def _run_attachment_context_test() -> None:
     assert answer.sources[0]["filename"] == "cv.txt"
     assert generator.tool_result["sources"][0]["filename"] == "cv.txt"
     assert "Python and FastAPI" in generator.tool_result["text"]
+    assert answer.retrieved_contexts == (generator.tool_result["text"],)
+    assert answer.model_name == "fake-response-model"
+    assert answer.token_usage == {"input_tokens": 9, "output_tokens": 5}
     assert answer.workflow_details[0]["summary"] == (
         "1 file(s) stored. 1 uploaded file(s) used as direct answer context."
     )

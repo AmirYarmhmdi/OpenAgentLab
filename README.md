@@ -417,7 +417,22 @@ Evaluation dependencies are in the `evaluation` dependency group:
 uv sync --group evaluation
 ```
 
-The evaluation package includes DeepEval and Ragas adapters, threshold configuration, dataset loading, and a runner under `src/openagentlab/evaluation`.
+The evaluation package includes DeepEval and Ragas adapters, threshold configuration, dataset loading, static smoke validation, and an opt-in live runtime evaluation command under `src/openagentlab/evaluation`.
+
+Static evaluation validates checked-in JSONL observations:
+
+```bash
+uv run python -m openagentlab.evaluation validate --dataset evaluation/datasets/smoke.jsonl --tags smoke
+```
+
+Live runtime evaluation is intentionally disabled unless you set
+`RUN_LIVE_EVALUATION=1` and provide OpenAI, PostgreSQL, and Qdrant:
+
+```bash
+RUN_LIVE_EVALUATION=1 uv run --group evaluation python -m openagentlab.evaluation live-deepeval --dataset evaluation/datasets/live_smoke.jsonl --tags live smoke --max-cases 1 --include-report-text
+```
+
+See `evaluation/README.md` for prerequisites, report output, and cost controls.
 
 ## Documentation
 

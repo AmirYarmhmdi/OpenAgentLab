@@ -77,6 +77,35 @@ def test_openai_response_generator_sends_grounded_context_and_returns_text() -> 
     assert payload["tool_result"] == 120
     assert payload["error"] is None
     assert "treat that result as authoritative" in str(call["instructions"])
+    assert "Answer the user's exact request directly" in str(call["instructions"])
+    assert "ignore unrelated details" in str(call["instructions"])
+
+
+def test_openai_response_generator_records_model_and_token_usage() -> None:
+    class UsageResponsesAPI(FakeResponsesAPI):
+        def create(self, **kwargs: object) -> object:
+            self.calls.append(kwargs)
+            return SimpleNamespace(
+                output_text=self.output_text,
+                usage=SimpleNamespace(input_tokens=11, output_tokens=7),
+            )
+
+    generator = OpenAIResponseGenerator(
+        model="fake-model",
+        client=FakeOpenAIClient(UsageResponsesAPI("The result is 120.")),
+    )
+
+    generator.generate_response(
+        user_query="Calculate 15 * 8",
+        plan=["Use a deterministic calculator."],
+        tool_name="calculator",
+        tool_result=120,
+    )
+
+    metadata = generator.last_generation_metadata
+    assert metadata is not None
+    assert metadata.model == "fake-model"
+    assert metadata.token_usage == {"input_tokens": 11, "output_tokens": 7}
 
 
 def test_openai_response_generator_preserves_structured_tool_result() -> None:
