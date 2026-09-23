@@ -28,35 +28,44 @@ The project follows a **Design First** approach: architecture, engineering princ
 
 ## Architecture Overview
 
-```text
-                  +----------------------+
-                  |      React Web       |
-                  |      Vite Client     |
-                  +----------+-----------+
-                             |
-                             v
-                  +----------------------+
-                  |      REST API        |
-                  |      FastAPI         |
-                  +----------+-----------+
-                             |
-          +------------------+------------------+
-          |                  |                  |
-          v                  v                  v
-   Document APIs      Message APIs       Workflow APIs
-          |                  |                  |
-          v                  v                  v
- Local/Azure File     RAG Retrieval      PostgreSQL
- Storage + Metadata   OpenAI + Qdrant    Workflow State
-                             |
-                  +----------+-----------+
-                  | Context Builder      |
-                  | Source Metadata      |
-                  +----------+-----------+
-                             |
-                             v
-                  OpenAI Response Generation
-```
+flowchart TB
+    UI["React Web Client<br/><small>Vite</small>"]
+    API["REST API<br/><small>FastAPI</small>"]
+
+    DOC["Document APIs"]
+    MSG["Message APIs"]
+    WF["Workflow APIs"]
+
+    FILES["File Storage & Metadata<br/><small>Local / Azure Blob Storage</small>"]
+    RAG["RAG Retrieval<br/><small>OpenAI embeddings + Qdrant</small>"]
+    DB["PostgreSQL<br/><small>Workflow state</small>"]
+
+    CONTEXT["Context Builder<br/><small>Bounded context + source metadata</small>"]
+    LLM["OpenAI Response Generation"]
+
+    UI --> API
+    API --> DOC
+    API --> MSG
+    API --> WF
+
+    DOC --> FILES
+    MSG --> RAG
+    WF --> DB
+
+    RAG --> CONTEXT
+    CONTEXT --> LLM
+
+    classDef client fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px;
+    classDef api fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px;
+    classDef service fill:#f0fdf4,stroke:#16a34a,color:#14532d;
+    classDef storage fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
+    classDef ai fill:#fdf2f8,stroke:#db2777,color:#831843,stroke-width:2px;
+
+    class UI client;
+    class API api;
+    class DOC,MSG,WF service;
+    class FILES,DB storage;
+    class RAG,CONTEXT,LLM ai;
 
 Agent modules under `src/openagentlab/agent` provide planning, tool selection, deterministic tool execution, plan validation, and response nodes for orchestrated workflows.
 
