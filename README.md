@@ -28,44 +28,62 @@ The project follows a **Design First** approach: architecture, engineering princ
 
 ## Architecture Overview
 
+```mermaid
 flowchart TB
-    UI["React Web Client<br/><small>Vite</small>"]
-    API["REST API<br/><small>FastAPI</small>"]
+    UI["React Web Client<br/>Vite + TypeScript"]
+    API["FastAPI REST API"]
 
-    DOC["Document APIs"]
-    MSG["Message APIs"]
-    WF["Workflow APIs"]
+    UI -->|submit files and questions| API
 
-    FILES["File Storage & Metadata<br/><small>Local / Azure Blob Storage</small>"]
-    RAG["RAG Retrieval<br/><small>OpenAI embeddings + Qdrant</small>"]
-    DB["PostgreSQL<br/><small>Workflow state</small>"]
+    subgraph Ingestion["Document ingestion"]
+        DOC["Document APIs"]
+        STORAGE["File storage<br/>Local filesystem or Azure Blob Storage"]
+        INDEX["Extract, chunk, and embed documents"]
+        VECTOR["Qdrant vector store"]
 
-    CONTEXT["Context Builder<br/><small>Bounded context + source metadata</small>"]
-    LLM["OpenAI Response Generation"]
+        DOC --> STORAGE --> INDEX --> VECTOR
+    end
 
-    UI --> API
+    subgraph Query["Question answering"]
+        MSG["Message APIs"]
+        RETRIEVE["Retrieve relevant chunks"]
+        CONTEXT["Context Builder<br/>Bounded context + source metadata"]
+        RESPONSE["OpenAI response generation"]
+
+        MSG --> RETRIEVE --> CONTEXT --> RESPONSE
+    end
+
+    subgraph Workflows["Workflow management"]
+        WF["Workflow APIs"]
+        DB["PostgreSQL<br/>Users, documents, sessions, messages, workflow state"]
+        WF --> DB
+    end
+
     API --> DOC
     API --> MSG
     API --> WF
 
-    DOC --> FILES
-    MSG --> RAG
-    WF --> DB
+    VECTOR --> RETRIEVE
+    RESPONSE -->|grounded answer with citations| UI
 
-    RAG --> CONTEXT
-    CONTEXT --> LLM
-
-    classDef client fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px;
-    classDef api fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px;
-    classDef service fill:#f0fdf4,stroke:#16a34a,color:#14532d;
-    classDef storage fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
-    classDef ai fill:#fdf2f8,stroke:#db2777,color:#831843,stroke-width:2px;
+    classDef client fill:#E0F2FE,stroke:#0284C7,color:#0C4A6E,stroke-width:2px;
+    classDef api fill:#EDE9FE,stroke:#7C3AED,color:#3B0764,stroke-width:2px;
+    classDef ingestion fill:#F0FDF4,stroke:#16A34A,color:#14532D,stroke-width:1.5px;
+    classDef retrieval fill:#FDF2F8,stroke:#DB2777,color:#831843,stroke-width:1.5px;
+    classDef data fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:1.5px;
 
     class UI client;
     class API api;
-    class DOC,MSG,WF service;
-    class FILES,DB storage;
-    class RAG,CONTEXT,LLM ai;
+    class DOC,INDEX ingestion;
+    class MSG,RETRIEVE,CONTEXT,RESPONSE retrieval;
+    class STORAGE,VECTOR,DB data;
+```
+
+The diagram shows three main paths:
+
+- **Document ingestion:** uploaded files are stored, processed, chunked, embedded, and indexed in Qdrant.
+- **Question answering:** a message retrieves relevant indexed chunks; the Context Builder prepares grounded context and metadata for OpenAI.
+- **Workflow management:** workflow-related application state, sessions, messages, and metadata are persisted in PostgreSQL.
 
 Agent modules under `src/openagentlab/agent` provide planning, tool selection, deterministic tool execution, plan validation, and response nodes for orchestrated workflows.
 
